@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
-import Lexing from "./Lexing";
-import Parser from "./Parser";
+import Lexing from "./Lexer/Lexing";
+import Parser from "./Parser/Parser";
 dotenv.config();
 
 function main() {
