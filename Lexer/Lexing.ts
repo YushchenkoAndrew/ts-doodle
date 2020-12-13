@@ -77,8 +77,8 @@ class Lexing {
     //
     function findLexeme(i: number, j: number, line: string) {
       let result = [];
-      for (let [k, lexem] of Object.entries(lexemes)) {
-        if (k.includes(line[j] || " ") && k == line.substring(j, j + k.length)) result.push({ value: k, type: lexem, line: Number(i), char: j });
+      for (let k in lexemes) {
+        if (k.includes(line[j] || " ") && k == line.substring(j, j + k.length)) result.push({ value: k, type: lexemes[k], line: Number(i), char: j });
       }
       return result;
     }
