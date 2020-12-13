@@ -1,0 +1,23 @@
+{
+  "+": { "INT": ["INT", "FLOAT"], "FLOAT": ["INT", "FLOAT"], "STR": ["STR"], "ANY": ["ANY"] },
+  "-": { "INT": ["INT", "FLOAT"], "FLOAT": ["INT", "FLOAT"], "STR": [], "ANY": ["ANY"] },
+  "*": { "INT": ["INT", "FLOAT"], "FLOAT": ["INT", "FLOAT"], "STR": [], "ANY": ["ANY"] },
+  "**": { "INT": ["INT", "FLOAT"], "FLOAT": ["INT", "FLOAT"], "STR": [], "ANY": ["ANY"] },
+  "/": { "INT": ["INT", "FLOAT"], "FLOAT": ["INT", "FLOAT"], "STR": [], "ANY": ["ANY"] },
+  "%": { "INT": ["INT"], "FLOAT": [], "STR": [], "ANY": ["ANY"] },
+  "&": { "INT": ["INT"], "FLOAT": [], "STR": [], "ANY": ["ANY"] },
+  "|": { "INT": ["INT"], "FLOAT": [], "STR": [], "ANY": ["ANY"] },
+  "^": { "INT": ["INT"], "FLOAT": [], "STR": [], "ANY": ["ANY"] },
+  "<<": { "INT": ["INT"], "FLOAT": [], "STR": [], "ANY": ["ANY"] },
+  ">>": { "INT": ["INT"], "FLOAT": [], "STR": [], "ANY": ["ANY"] },
+  "==": { "INT": ["INT", "FLOAT", "STR"], "FLOAT": ["INT", "FLOAT", "STR"], "STR": ["INT", "FLOAT", "STR"], "ANY": ["ANY"] },
+  "!=": { "INT": ["INT", "FLOAT", "STR"], "FLOAT": ["INT", "FLOAT", "STR"], "STR": ["INT", "FLOAT", "STR"], "ANY": ["ANY"] },
+  ">": { "INT": ["INT", "FLOAT"], "FLOAT": ["INT", "FLOAT"], "STR": [], "ANY": ["ANY"] },
+  "<": { "INT": ["INT", "FLOAT"], "FLOAT": ["INT", "FLOAT"], "STR": [], "ANY": ["ANY"] },
+  ">=": { "INT": ["INT", "FLOAT"], "FLOAT": ["INT", "FLOAT"], "STR": [], "ANY": ["ANY"] },
+  "<=": { "INT": ["INT", "FLOAT"], "FLOAT": ["INT", "FLOAT"], "STR": [], "ANY": ["ANY"] },
+  "and": { "INT": ["INT", "FLOAT", "STR"], "FLOAT": ["INT", "FLOAT", "STR"], "STR": ["INT", "FLOAT", "STR"], "ANY": ["ANY"] },
+  "or": { "INT": ["INT", "FLOAT", "STR"], "FLOAT": ["INT", "FLOAT", "STR"], "STR": ["INT", "FLOAT", "STR"], "ANY": ["ANY"] },
+  "not": { "INT": ["INT"], "FLOAT": ["FLOAT"], "STR": ["STR"], "ANY": ["ANY"] },
+  "~": { "INT": ["INT"], "FLOAT": [], "STR": [], "ANY": ["ANY"] }
+}

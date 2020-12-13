@@ -1,0 +1,32 @@
+{
+  "Parentheses": 0,
+  "Power Operator": 1,
+
+  "Bitwise Unary Operator": 2,
+  "Neg Unary Operator": 3,
+
+  "Mult Operator": 4,
+  "Div Operator": 4,
+  "Module Operator": 4,
+
+  "Neg Operator": 5,
+  "Add Operator": 5,
+
+  " Operator Bitwise Right": 6,
+  " Operator Bitwise Left": 6,
+
+  "AND Operator Bitwise": 7,
+  "XOR Operator Bitwise": 8,
+  "OR Operator Bitwise": 9,
+
+  " Operator Equal To": 10,
+  " Operator Not Equal To": 10,
+  " Operator More Than": 10,
+  " Operator More Than or Equal": 10,
+  " Operator Less Than": 10,
+  " Operator Less Than or Equal": 10,
+
+  "LogicNeg Unary Operator Keyword": 11,
+  "AND Operator Keyword": 12,
+  "OR Operator Keyword": 13
+}
