@@ -1,19 +1,22 @@
+import { isInclude } from "../lib";
 import { Token } from "../Lexer/Lexing";
 
 class ErrorHandler {
   message(message: string, tokens: Token[], index: number) {
+    let errToken = tokens[index] ?? tokens.slice(-1)[0];
+
     throw new Error(
       [
-        `Error in line ${tokens[index].line + 1}, col ${tokens[index].char + 1}`,
+        `Error in line ${errToken.line + 1}, col ${errToken.char + 1}`,
         tokens.map((token) => token.value).join(""),
-        `${" ".repeat(tokens[index].char)}^`,
+        `${" ".repeat(errToken.char)}^`,
         `${message}:`,
       ].join("\n")
     );
   }
 
-  stateChecker(key: string, token: any, error: string, ...expect: string[]) {
-    if (!token || !token[key] || !this.isInclude(token[key], ...expect)) this.message(error, token || { line: this.line, char: 0 });
+  stateChecker(key: string, tokens: Token[], index: number, error: string, ...expect: string[]) {
+    if (!tokens[index] || !tokens[index][key] || !isInclude(tokens[index][key], ...expect)) this.message(error, tokens, index);
   }
 }
 
