@@ -1,34 +1,29 @@
+import ErrorHandler from "../Error/Error";
+import Statement from "./Statement/Statement";
 import { Token } from "../Lexer/Lexing";
 import { Operation } from "./Interfaces";
-import { Float, Int, Str, Var } from "./Expression/Interfaces";
-import ErrorHandler from "../Error/Error";
+import { Types } from "./Expression/Interfaces";
+import { Assign } from "./Statement/Interfaces";
 
 class Parser {
   tokens: Token[][];
-  syntaxTree: {
-    type: string;
-    body: Operation[];
-  } = {
-    type: "SyntaxTree",
-    body: [],
-  };
+  syntaxTree = { type: "SyntaxTree", body: [] as Operation[] };
 
   err = new ErrorHandler();
+  statement = new Statement();
+
   line = 0; // Curr line
   index = 0; // Curr Index for tokens
-  currLevel: { level: number; header: Operation[]; body: Operation[] } = {
+  currLevel = {
     level: 0, // Define Statement Depth
-    header: [], // Put created upper head variables in header
-    body: [],
+    header: [] as Operation[], // Put created upper head variables in header
+    body: [] as Operation[],
   };
 
   ast: any;
   neg = "Unary";
   parentheses = 0;
-  type: {
-    prev: Float | Int | Str | Var;
-    curr: Float | Int | Str | Var;
-  } = { prev: {} as Int, curr: {} as Int };
+  type = { prev: {} as Types, curr: {} as Types };
 
   constructor(tokens: Token[][]) {
     console.log("\x1b[34m", "\n~ Start Parser:", "\x1b[0m");
@@ -69,7 +64,7 @@ class Parser {
 
     this.ast = undefined;
     this.neg = "Unary";
-    this.type = { prev: {} as Int, curr: {} as Int };
+    this.type = { prev: {} as Types, curr: {} as Types };
     this.parentheses = 0;
 
     switch (type.split(/\ /)[0]) {
@@ -79,7 +74,7 @@ class Parser {
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
         this.currLevel.level++;
-        // this.currLevel.body.push({ Declaration: { type: "FUNC", ...this.parseFunc() } });
+        this.currLevel.body.push({ Declaration: this.statement.parseFunc(this) } as Operation);
 
         // Save previous data
         let header = JSON.parse(JSON.stringify(this.currLevel.header));
@@ -87,7 +82,7 @@ class Parser {
 
         // TODO: Not the best solution, have some issues
         // Put created upper head variables in header
-        // this.currLevel.header.push(...header, ...this.currLevel.body, ...body.slice(-1)[0].Declaration.params.map((param) => ({ Statement: param })));
+        this.currLevel.header.push(...header, ...this.currLevel.body, ...body.slice(-1)[0].Declaration.params.map((param: Assign) => ({ Statement: param })));
         this.currLevel.body = [];
 
         // Get a next level, because of the recursion I could not save
@@ -210,7 +205,7 @@ class Parser {
         console.log(`VARIABLE: LEVEL ${level}`, this.tokens[this.line][this.index]);
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
-        //       this.currLevel.body.push({ Statement: this.parseVariable() });
+        this.currLevel.body.push({ Statement: this.statement.parseVariable(this) } as Operation);
         break;
 
       case "Block":
@@ -249,11 +244,6 @@ class Parser {
     }
 
     return true;
-  }
-
-  isInclude(type: string, ...arr: string[]) {
-    for (let i of arr) if (type.includes(i)) return true;
-    return false;
   }
 
   // getDefinedToken(type, key, value, { body = [], header = [] }, alert = true) {

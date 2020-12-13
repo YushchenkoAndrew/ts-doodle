@@ -1,23 +1,23 @@
-import { Float, Int, Str, Var, BinaryOperation, UnaryOperation } from "../Expression/Interfaces";
+import { Types, AST } from "../Expression/Interfaces";
 import { Operation } from "../Interfaces";
 
 export interface Assign {
   type: string;
   name: string;
-  Expression?: Float | Int | Str | Var | BinaryOperation | UnaryOperation;
-  defined: Float | Int | Str | Var;
+  Expression?: Types | AST;
+  defined: Types;
 }
 
 export interface FuncCall {
   type: string;
   name: string;
   params: Assign[];
-  defined: Float | Int | Str | Var;
+  defined: Types;
 }
 
 export interface Condition {
   type: string;
-  Expression: Float | Int | Str | Var | BinaryOperation | UnaryOperation;
+  Expression: Types | AST;
   body: Operation[];
   else?: Operation[];
 }
