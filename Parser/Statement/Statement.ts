@@ -171,7 +171,7 @@ class Statement {
 
     // Check if it's assign with an operation
     // if (this.isInclude(type, "Add", "Sub", "Mul", "Div", "Mod", "Or", "And", "Xor", "SL", "SR")) changeToken(this.tokens[this.line], this.index - 1);
-    return { type: "VAR", name: `_${value}`, Expression: this.exp.parseExpression(ptr, { priority: null }), defined: this.exp.type.curr };
+    return { type: "VAR", name: `_${value}`, Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
   }
 
   // //

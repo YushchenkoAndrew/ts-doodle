@@ -1,6 +1,6 @@
 # Test
 
-def test():
-  b = 1
+def test(a):
+    b = -(1 ** -2) ** 4
 
-a = 5.5
+c = -"a"
