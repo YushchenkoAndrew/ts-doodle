@@ -13,13 +13,23 @@ class Expression {
   ast = {} as AST;
   type = { prev: {} as Types, curr: {} as Types };
 
+  parse(ptr: Parser): Types | AST {
+    this.ast = {} as AST;
+    this.type = { prev: {} as Types, curr: {} as Types };
+
+    this.neg = "Unary";
+    this.parentheses = 0;
+
+    return this.parseExpression(ptr, {});
+  }
+
   /**
    *
    * @param {*} param0
    * @param params   --   Previous param
    * @param priority --   priority is important
    */
-  parseExpression(ptr: Parser, { params = {} as Types, priority = null }: { params?: Types; priority: number | null }): Types | AST {
+  private parseExpression(ptr: Parser, { params = {} as Types, priority = null }: { params?: Types | AST; priority?: number | null }): Types | AST {
     let { type } = ptr.tokens[ptr.line][ptr.index] || { type: "LINE_END" };
 
     switch (type.split(/\ /g)[1] || type) {
@@ -37,7 +47,8 @@ class Expression {
 
         // If this.ast is not define then call parseExpression, it's need for start
         // up the recursion
-        if (!("type" in this.ast) && priority != -1) return this.parseExpression(ptr, { params: constant, priority: null });
+        // if (!priority && priority != -1) return this.parseExpression(ptr, { params: constant, priority });
+        if (priority === null) return this.parseExpression(ptr, { params: constant, priority });
         return constant;
 
       // case "Variable":
@@ -55,25 +66,25 @@ class Expression {
       //   if (!this.ast && priority != -1) return this.parseExpression({ params: varType });
       //   return varType;
 
-      // case "Unary": {
-      //   let currPriority = priorityTable[type];
-      //   let operator = ptr.tokens[ptr.line][ptr.index++].value;
+      case "Unary": {
+        let currPriority = priorityTable[type];
+        let operator = ptr.tokens[ptr.line][ptr.index++].value;
 
-      //   // Check Operation type and if it a Neg but also it should be a binary
-      //   // operation then change tokens type and recall parseExpression function
-      //   if (this.neg == "Binary" && operator == "-") {
-      //     ptr.tokens[ptr.line][--ptr.index].type = "Neg Operator";
-      //     return this.parseExpression({ params: params, priority: priority });
-      //   }
+        // Check Operation type and if it a Neg but also it should be a binary
+        // operation then change tokens type and recall parseExpression function
+        if (this.neg == "Binary" && operator == "-") {
+          ptr.tokens[ptr.line][--ptr.index].type = "Neg Operator";
+          return this.parseExpression(ptr, { params: params, priority: priority });
+        }
 
-      //   // Get an expression with priority -1, that mean that after finding a
-      //   // constant value or variable return it immediately, this need when this.ast is undefined
-      //   let exp = this.parseExpression({ priority: -1 });
-      //   this.stateChecker("type", this.type.curr, "Such Unary opinions is not allowed", ...this.allowedOperations[operator][this.type.prev.type]);
+        // Get an expression with priority -1, that mean that after finding a
+        // constant value or variable return it immediately, this need when this.ast is undefined
+        let exp = this.parseExpression(ptr, { priority: -1 });
+        this.err.checkObj("type", this.type.curr, "Such Unary opinions is not allowed", ...allowedOperations[operator][this.type.prev.type]);
 
-      //   if (!priority) return this.parseExpression({ params: { type: "Unary Operation", value: operator, exp: exp, priority: currPriority } });
-      //   return { type: "Unary Operation", value: operator, exp: exp, priority: currPriority };
-      // }
+        if (!priority) return this.parseExpression(ptr, { params: { type: "Unary Operation", value: operator, exp: exp, priority: currPriority } as AST });
+        return { type: "Unary Operation", value: operator, exp: exp, priority: currPriority };
+      }
 
       case "Operator": {
         let currPriority = priorityTable[type];
@@ -83,23 +94,25 @@ class Expression {
         // Unary operation
         this.neg = "Unary";
 
-        if (!("type" in this.ast)) this.ast = { type: "Binary Operation", value: operator, left: params, right: undefined, priority: currPriority };
-        // this.ast = this.ast || { type: "Binary Operation", value: operator, left: params, right: undefined, priority: currPriority };
         let right = this.parseExpression(ptr, { priority: currPriority });
-
-        // this.err.checkToken("type", this.type.curr, "Such arithmetic syntax don't allow", ...allowedOperations[operator][this.type.prev.type]);
+        this.err.checkObj("type", this.type.curr, "Such arithmetic syntax don't allow", ...allowedOperations[operator][this.type.prev.type]);
 
         // Initialize a basic AST if the AST is not define
         if (priority === null) {
-          // TODO: FIXME:
-          // let branch = getLastBranch(["left", "exp"], currPriority, params);
+          this.ast = { type: "Binary Operation", value: operator, left: params, right: undefined, priority: currPriority };
+          let branch = getLastBranch(["left", "exp"], currPriority, params as AST);
 
-          // // If Unary operation have a lower priority than the Binary operation, then swap them
-          // if (branch && branch.priority != currPriority) {
-          //   branch.exp = { type: "Binary Operation", value: operator, left: branch.exp, right: right, priority: currPriority };
-          //   this.ast = copyTree(params);
-          // } else
-          (this.ast as BinaryOperation).right = right;
+          // If Unary operation have a lower priority than the Binary operation, then swap them
+          if (branch && branch.priority != currPriority) {
+            (branch as UnaryOperation).exp = {
+              type: "Binary Operation",
+              value: operator,
+              left: (branch as UnaryOperation).exp,
+              right: right,
+              priority: currPriority,
+            } as AST;
+            this.ast = copyTree(params) as AST;
+          } else this.ast.right = right;
 
           return this.parseExpression(ptr, { priority: currPriority });
         }
@@ -127,40 +140,40 @@ class Expression {
         return this.parseExpression(ptr, { priority: currPriority });
       }
 
-      // case "Parentheses": {
-      //   if (this.parentheses || !type.includes("Close")) this.index++;
-      //   let right = undefined;
+      case "Parentheses": {
+        if (this.parentheses || !type.includes("Close")) ptr.index++;
+        let right = undefined;
 
-      //   if (type.includes("Open")) {
-      //     let saveTree = this.ast ? copyTree(this.ast) : undefined;
-      //     this.parentheses++;
-      //     this.ast = undefined;
-      //     right = this.parseExpression({});
+        if (type.includes("Open")) {
+          let saveTree = copyTree(this.ast) as AST;
+          this.parentheses++;
+          this.ast = {} as AST;
+          right = this.parseExpression(ptr, {});
 
-      //     // Check If Expression in Parentheses is Empty or not
-      //     if (!right.type) this.errorMessageHandler("Such Operation with Empty Parentheses not allowed", this.tokens[this.line][this.index]);
+          // Check If Expression in Parentheses is Empty or not
+          // if (!right.type) this.errorMessageHandler("Such Operation with Empty Parentheses not allowed", ptr.tokens[ptr.line][this.index]);
 
-      //     // Check if Expression in Parentheses is any type of Operation ?
-      //     // If so then set the highest Operation Branch to the maximum
-      //     // priority level that means '0', that need for future ast building
-      //     if (right.type.includes("Operation")) right.priority = priorityTable[type.split(" ")[1]];
-      //     this.ast = saveTree;
-      //     defineAnyType(this.type.curr, this.ast);
+          // Check if Expression in Parentheses is any type of Operation ?
+          // If so then set the highest Operation Branch to the maximum
+          // priority level that means '0', that need for future ast building
+          if (right.type.includes("Operation")) (right as AST).priority = priorityTable[type.split(" ")[1]];
+          this.ast = saveTree;
+          defineAnyType(this.type.curr, this.ast);
 
-      //     // Check if this.ast is undefined this mean one of this situation:
-      //     // (1 + 2) * 3   --   In this case I send received right value
-      //     // as a "constant" (send it as a left params)
-      //     if (!this.ast && priority != -1) return this.parseExpression({ params: right });
-      //   } else this.parentheses--;
+          // Check if this.ast is undefined this mean one of this situation:
+          // (1 + 2) * 3   --   In this case I send received right value
+          // as a "constant" (send it as a left params)
+          if (priority === null) return this.parseExpression(ptr, { params: right });
+        } else this.parentheses--;
 
-      //   return right || this.ast || params;
-      // }
+        return right || this.ast || params;
+      }
 
       case "LINE_END":
       default:
         // if (this.ast) drawExpression(this.ast);
         if (this.parentheses != 0) this.err.message("Error with Parentheses", ptr.tokens[ptr.line], ptr.index);
-        return this.ast || params;
+        return priority ? this.ast : params;
     }
 
     function getLastBranch(keys: string[], priority: number, branch: AST): AST | undefined {
@@ -175,12 +188,11 @@ class Expression {
       // data = copyTree(data);
       data = JSON.parse(JSON.stringify(data));
 
-      // TODO:
-      // if ("exp" in branch && branch.exp) {
-      //   delete branch.exp;
-      //   (branch as BinaryOperation).left = {} as AST;
-      //   (branch as BinaryOperation).right = {} as AST;
-      // }
+      if ((branch as UnaryOperation).exp) {
+        delete (branch as UnaryOperation).exp;
+        (branch as BinaryOperation).left = {} as AST;
+        (branch as BinaryOperation).right = {} as AST;
+      }
 
       for (let key in data) branch[key] = JSON.parse(JSON.stringify(data[key]));
     }
@@ -208,7 +220,7 @@ class Expression {
     }
   }
 
-  parseConstExpression(ptr: Parser): Types {
+  private parseConstExpression(ptr: Parser): Types {
     let { value, type } = ptr.tokens[ptr.line][ptr.index++];
 
     // Type converting
