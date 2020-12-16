@@ -15,8 +15,17 @@ class ErrorHandler {
     );
   }
 
+  // TODO: Move all errors to the message func!!!
+  tempMessage(message: string) {
+    throw new Error(message);
+  }
+
   stateChecker(key: string, tokens: Token[], index: number, error: string, ...expect: string[]) {
     if (!tokens[index] || !tokens[index][key] || !isInclude(tokens[index][key], ...expect)) this.message(error, tokens, index);
+  }
+
+  checkObj(key: string, obj: Object, error: string, ...expect: string[]) {
+    if (!obj || !obj[key] || !isInclude(obj[key], ...expect)) this.tempMessage(error);
   }
 }
 
