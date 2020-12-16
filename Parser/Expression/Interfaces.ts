@@ -34,7 +34,7 @@ export interface BinaryOperation {
 export interface UnaryOperation {
   type: string;
   value: string;
-  exp: Int | Var;
+  exp?: Types;
   priority: number;
 }
 
