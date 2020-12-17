@@ -6,8 +6,13 @@ import { Declaration } from "../Interfaces";
 import { Assign, Condition, ForLoop, FuncCall } from "./Interfaces";
 
 class Statement {
-  err = new ErrorHandler();
-  exp = new Expression();
+  err: ErrorHandler;
+  exp: Expression;
+
+  constructor(err: ErrorHandler) {
+    this.err = err;
+    this.exp = new Expression(this.err);
+  }
 
   // stateChecker(key: string, token: Token, error: string, ...expect: string[]) {
   //   if (!token || !token[key] || !this.isInclude(token[key], ...expect)) this.errorMessageHandler(error, token || { line: this.line, char: 0 });
@@ -19,9 +24,9 @@ class Statement {
 
     while (ptr.tokens[ptr.line][ptr.index] && !ptr.tokens[ptr.line][ptr.index].type.includes("Close")) {
       let { value } = ptr.tokens[ptr.line][ptr.index];
-      this.err.stateChecker("type", ptr.tokens[ptr.line], ptr.index++, "Wrong Function declaration Syntax", ...allowed);
+      this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, ...allowed);
       params.push(value);
-      this.err.stateChecker("type", ptr.tokens[ptr.line], ptr.index, "Wrong Function declaration Syntax", "Close", "Comma");
+      this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, "Close", "Comma");
       ptr.index += Number(ptr.tokens[ptr.line][ptr.index].type.includes("Comma"));
     }
     return params;
@@ -30,18 +35,18 @@ class Statement {
   parseFunc(ptr: Parser): Declaration {
     // Delete all spaces
     ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
-    this.err.stateChecker("type", ptr.tokens[ptr.line], ptr.index, "Wrong Function Declaration", "Variable");
+    this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong Function Declaration", ptr }, "Variable");
     let { value } = ptr.tokens[ptr.line][ptr.index++];
 
-    this.err.stateChecker("type", ptr.tokens[ptr.line], ptr.index++, "Open Parentheses are missing", "Open Parentheses");
+    this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Open Parentheses are missing", ptr }, "Open Parentheses");
 
     // Create type "ANY" which is mean that variable is undefined
     // TODO: Think about it, do I need to create arguments (params) as Statements ?
     // Complete Expression part
     let params = this.getParams(ptr, "Variable").map((param) => ({ type: "VAR", name: `_${param}`, defined: { value: "", type: "ANY" } } as Assign));
 
-    this.err.stateChecker("type", ptr.tokens[ptr.line], ptr.index++, "Close Parentheses are missing", "Close Parentheses");
-    this.err.stateChecker("type", ptr.tokens[ptr.line], ptr.index++, "Indented Block is missing", "Start Block");
+    this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
+    this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Indented Block is missing", ptr }, "Start Block");
     return { type: "FUNC", name: `_${value}`, params: params, body: [], defined: { value: "", type: "INT", kind: 10 } };
   }
 
@@ -156,7 +161,13 @@ class Statement {
   parseVariable(ptr: Parser): Assign | FuncCall {
     // Delete all spaces
     ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
-    this.err.stateChecker("type", ptr.tokens[ptr.line], ptr.index, "Wrong Variable Syntax", "Assignment", "Open Parentheses");
+    this.err.checkObj(
+      "type",
+      ptr.tokens[ptr.line][ptr.index],
+      { name: "SyntaxError", message: "Wrong Variable Syntax", ptr },
+      "Assignment",
+      "Open Parentheses"
+    );
 
     if (ptr.tokens[ptr.line][ptr.index].type.includes("Assignment")) return this.parseVariableAssign(ptr);
     // return this.parseFuncCaller();
@@ -167,7 +178,16 @@ class Statement {
     let { value } = ptr.tokens[ptr.line][ptr.index - 1];
     let { type } = ptr.tokens[ptr.line][ptr.index++];
 
-    this.err.stateChecker("type", ptr.tokens[ptr.line], ptr.index, "Type error", "Variable", "Number", "String", "Unary", "Parentheses");
+    this.err.checkObj(
+      "type",
+      ptr.tokens[ptr.line][ptr.index],
+      { name: "SyntaxError", message: "Invalid Type", ptr },
+      "Variable",
+      "Number",
+      "String",
+      "Unary",
+      "Parentheses"
+    );
 
     // Check if it's assign with an operation
     // if (this.isInclude(type, "Add", "Sub", "Mul", "Div", "Mod", "Or", "And", "Xor", "SL", "SR")) changeToken(this.tokens[this.line], this.index - 1);

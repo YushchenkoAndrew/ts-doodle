@@ -2,15 +2,14 @@ import ErrorHandler from "../Error/Error";
 import Statement from "./Statement/Statement";
 import { Token } from "../Lexer/Lexing";
 import { Operation } from "./Interfaces";
-import { Types } from "./Expression/Interfaces";
 import { Assign } from "./Statement/Interfaces";
 
 class Parser {
   tokens: Token[][];
-  syntaxTree = { type: "SyntaxTree", body: [] as Operation[] };
+  err: ErrorHandler;
+  statement: Statement;
 
-  err = new ErrorHandler();
-  statement = new Statement();
+  syntaxTree = { type: "SyntaxTree", body: [] as Operation[] };
 
   line = 0; // Curr line
   index = 0; // Curr Index for tokens
@@ -20,27 +19,15 @@ class Parser {
     body: [] as Operation[],
   };
 
-  ast: any;
-  neg = "Unary";
-  parentheses = 0;
-  type = { prev: {} as Types, curr: {} as Types };
-
   constructor(tokens: Token[][]) {
     console.log("\x1b[34m", "\n~ Start Parser:", "\x1b[0m");
-    // Input modules
-    // this.inputModule(require("./Expression"));
-    // this.inputModule(require("./Statement"));
 
     // Deep copy data, for remove linking
     this.tokens = JSON.parse(JSON.stringify(tokens));
 
-    // this.allowedOperations = require("./AllowedOperations.json");
-    // this.basicFunc = require("./BasicFunc.json");
+    this.err = new ErrorHandler(JSON.parse(JSON.stringify(tokens)));
+    this.statement = new Statement(this.err);
   }
-
-  // inputModule(mod) {
-  //   for (let key in mod) this[key] = mod[key].bind(this);
-  // }
 
   start() {
     try {
@@ -61,12 +48,6 @@ class Parser {
 
   initStateMachine(level: number = 0, forcedBlock: boolean = false): number {
     let { type } = this.tokens[this.line][this.index] || { type: this.tokens[this.line + 1] ? "NEXT" : "EOF" };
-
-    this.ast = undefined;
-    this.neg = "Unary";
-    this.type = { prev: {} as Types, curr: {} as Types };
-    this.parentheses = 0;
-
     switch (type.split(/\ /)[0]) {
       case "Function": {
         console.log(`FUNCTION: LEVEL ${level}`, this.tokens[this.line][this.index]);
@@ -222,7 +203,7 @@ class Parser {
         return level;
 
       default:
-        this.err.message(`Wrong Syntax`, this.tokens[this.line], this.index);
+        this.err.message({ name: "SyntaxError", message: `Such type of operation as "${type}" not exist`, ptr: this });
     }
 
     return this.initStateMachine(level);
@@ -234,7 +215,7 @@ class Parser {
 
   checkLevel(level: number, force: boolean) {
     if (this.currLevel.level - level < 0 || (force && this.currLevel.level != level)) {
-      this.err.message(`Wrong Syntax`, this.tokens[this.line], this.index);
+      this.err.message({ name: "SyntaxError", message: `Wrong operation level`, ptr: this });
     }
 
     if (this.currLevel.level - level != 0) {
