@@ -1,7 +1,8 @@
+import { FuncCall } from "../Statement/Interfaces";
 // All types represent a type with value and a defined
 // at the same time
 export interface Str {
-  value?: string;
+  value: string;
   type: string;
   length: number;
 }
@@ -20,23 +21,23 @@ export interface Float {
 export interface Var {
   value: string;
   type: string;
-  defined: Str | Int | Float | Var;
+  defined: Types;
 }
 
 export interface BinaryOperation {
   type: string;
   value: string;
-  left: Str | Int | Float | Var;
-  right: Str | Int | Float | Var | undefined;
+  left: Types;
+  right?: Types;
   priority: number;
 }
 
 export interface UnaryOperation {
   type: string;
   value: string;
-  exp?: Types;
+  exp: Types;
   priority: number;
 }
 
-export type Types = Int | Str | Float | Var;
+export type Types = Int | Str | Float | Var | FuncCall;
 export type AST = BinaryOperation | UnaryOperation;
