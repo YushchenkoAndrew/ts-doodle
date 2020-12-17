@@ -1,31 +1,40 @@
 import { isInclude } from "../lib";
 import { Token } from "../Lexer/Lexing";
+import Parser from "../Parser/Parser";
+
+interface Pointer {
+  line: number;
+  index: number;
+  tokens: Token[][];
+}
+
+interface ErrMessage {
+  name: string;
+  message: string;
+  ptr: Pointer;
+}
 
 class ErrorHandler {
-  message(message: string, tokens: Token[], index: number) {
-    let errToken = tokens[index] ?? tokens.slice(-1)[0];
+  tokens: Token[][];
 
+  constructor(tokens: Token[][]) {
+    this.tokens = tokens;
+  }
+
+  message({ name, message, ptr: { line, index, tokens } }: ErrMessage) {
+    let errToken = tokens[line][index] ?? tokens[line].slice(-1)[0];
     throw new Error(
       [
         `Error in line ${errToken.line + 1}, col ${errToken.char + 1}`,
-        tokens.map((token) => token.value).join(""),
+        this.tokens[line].map((token) => (token.type == "String" ? `"${token.value}"` : token.value)).join(""),
         `${" ".repeat(errToken.char)}^`,
-        `${message}:`,
+        `${name}: ${message}`,
       ].join("\n")
     );
   }
 
-  // TODO: Move all errors to the message func!!!
-  tempMessage(message: string) {
-    throw new Error(message);
-  }
-
-  stateChecker(key: string, tokens: Token[], index: number, error: string, ...expect: string[]) {
-    if (!tokens[index] || !tokens[index][key] || !isInclude(tokens[index][key], ...expect)) this.message(error, tokens, index);
-  }
-
-  checkObj(key: string, obj: Object, error: string, ...expect: string[]) {
-    if (!obj || !obj[key] || !isInclude(obj[key], ...expect)) this.tempMessage(error);
+  checkObj(key: string, obj: Object, err: ErrMessage, ...expect: string[]) {
+    if (!obj?.[key] || !isInclude(obj[key], ...expect)) this.message(err);
   }
 }
 
