@@ -3,15 +3,20 @@ import allowedOperations from "./AllowedOperations.json";
 import Parser from "../Parser";
 import { Str, BinaryOperation, UnaryOperation, Types, AST, Var } from "./Interfaces";
 import ErrorHandler from "../../Error/Error";
+import { FuncCall } from "../Statement/Interfaces";
 
 class Expression {
-  err = new ErrorHandler();
+  err: ErrorHandler;
 
   neg = "Unary";
   parentheses = 0;
 
   ast = {} as AST;
   type = { prev: {} as Types, curr: {} as Types };
+
+  constructor(err: ErrorHandler) {
+    this.err = err;
+  }
 
   parse(ptr: Parser): Types | AST {
     this.ast = {} as AST;
@@ -25,7 +30,6 @@ class Expression {
 
   /**
    *
-   * @param {*} param0
    * @param params   --   Previous param
    * @param priority --   priority is important
    */
@@ -80,7 +84,12 @@ class Expression {
         // Get an expression with priority -1, that mean that after finding a
         // constant value or variable return it immediately, this need when this.ast is undefined
         let exp = this.parseExpression(ptr, { priority: -1 });
-        this.err.checkObj("type", this.type.curr, "Such Unary opinions is not allowed", ...allowedOperations[operator][this.type.prev.type]);
+        this.err.checkObj(
+          "type",
+          this.type.curr,
+          { name: "TypeError", message: "Such Unary Operation is not allowed", ptr },
+          ...allowedOperations[operator][this.type.prev.type]
+        );
 
         if (!priority) return this.parseExpression(ptr, { params: { type: "Unary Operation", value: operator, exp: exp, priority: currPriority } as AST });
         return { type: "Unary Operation", value: operator, exp: exp, priority: currPriority };
@@ -95,7 +104,12 @@ class Expression {
         this.neg = "Unary";
 
         let right = this.parseExpression(ptr, { priority: currPriority });
-        this.err.checkObj("type", this.type.curr, "Such arithmetic syntax don't allow", ...allowedOperations[operator][this.type.prev.type]);
+        this.err.checkObj(
+          "type",
+          this.type.curr,
+          { name: "TypeError", message: "Such Binary Operation is not allowed", ptr },
+          ...allowedOperations[operator][this.type.prev.type]
+        );
 
         // Initialize a basic AST if the AST is not define
         if (priority === null) {
@@ -151,7 +165,7 @@ class Expression {
           right = this.parseExpression(ptr, {});
 
           // Check If Expression in Parentheses is Empty or not
-          // if (!right.type) this.errorMessageHandler("Such Operation with Empty Parentheses not allowed", ptr.tokens[ptr.line][this.index]);
+          if (!right.type) this.err.message({ name: "SyntaxError", message: `Such Expression with an Empty Parentheses not allowed`, ptr });
 
           // Check if Expression in Parentheses is any type of Operation ?
           // If so then set the highest Operation Branch to the maximum
@@ -171,8 +185,8 @@ class Expression {
 
       case "LINE_END":
       default:
-        // if (this.ast) drawExpression(this.ast);
-        if (this.parentheses != 0) this.err.message("Error with Parentheses", ptr.tokens[ptr.line], ptr.index);
+        if (priority !== null) this.drawExpression(this.ast);
+        if (this.parentheses != 0) this.err.message({ name: "TypeError", message: `Unmatched Parentheses`, ptr });
         return priority ? this.ast : params;
     }
 
@@ -189,7 +203,7 @@ class Expression {
       data = JSON.parse(JSON.stringify(data));
 
       if ((branch as UnaryOperation).exp) {
-        delete (branch as UnaryOperation).exp;
+        delete (branch as { exp?: AST }).exp;
         (branch as BinaryOperation).left = {} as AST;
         (branch as BinaryOperation).right = {} as AST;
       }
@@ -198,7 +212,7 @@ class Expression {
     }
 
     function defineType({ prev, curr }: { prev: Types; curr: Types }, next: Types, branch: AST) {
-      delete next.value;
+      delete (next as { value?: string }).value;
       defineAnyType(next, branch);
       if (!curr.type || curr.type == "ANY") curr = { ...next };
       else if (curr.type == "STR") (next as Str).length += (curr as Str).length;
@@ -238,8 +252,7 @@ class Expression {
         return { value: `0${value.substr(2)}H`, type: "INT", kind: 16 };
 
       case "Float":
-        if (parseInt(value) == Number(value)) return { value: parseInt(value) + "", type: "INT", kind: 10 };
-        return { value: Number(value) + "", type: "FLOAT" };
+        return { value: value, type: "FLOAT" };
 
       case "Number":
         return { value: value, type: "INT", kind: 10 };
@@ -248,64 +261,70 @@ class Expression {
         return { value: value, type: "STR", length: value.length };
     }
 
-    this.err.message(`Convert Type Error`, ptr.tokens[ptr.line], ptr.index - 1);
-
+    this.err.message({ name: "TypeError", message: `Invalid Type "${type}"`, ptr });
     return {} as Types;
+  }
+
+  // Create a simple algorithm for drawing AST, it will improve
+  // Expression debugging
+  drawExpression(branch: AST | Types, i: number = 0, j: number = 0, lines: string[] = []) {
+    let { type } = branch;
+    switch (i && type) {
+      case "FLOAT":
+      case "STR":
+      case "VAR":
+      case "INT": {
+        let { value } = branch as Var;
+        lines[i] = spliceStr(lines[i], j, value.length, value);
+        break;
+      }
+
+      case "FUNC_CALL": {
+        let { name } = branch as FuncCall;
+        lines[i] = spliceStr(lines[i], j, name.length, name);
+        break;
+      }
+
+      case "Binary Operation": {
+        let { value } = branch as BinaryOperation;
+        lines[i] = spliceStr(lines[i], j - 3, value.length + 3, `[${value}]\ `);
+        lines[++i] = spliceStr(lines[i], j - 4, 5, "/   \\");
+        lines[++i] = spliceStr(lines[i], j - 5, 7, "/     \\");
+
+        // Check the Left and Right side
+        type = (branch as BinaryOperation).left.type;
+        this.drawExpression((branch as BinaryOperation).left, i + (type.includes("Operation") ? 1 : 0), j - 5, lines);
+        if ((branch as BinaryOperation).right?.type?.includes("Operation"))
+          this.drawExpression((branch as BinaryOperation).right ?? ({ value: "" } as Var), ++i, j + 4, lines);
+        else this.drawExpression((branch as BinaryOperation).right ?? ({ value: "" } as Var), i, j + 1, lines);
+        break;
+      }
+
+      case "Unary Operation": {
+        let { value } = branch as UnaryOperation;
+        lines[i] = spliceStr(lines[i], j - 3, value.length + 3, `[${value}]\ `);
+        lines[++i] = spliceStr(lines[i], j - 2, 1, "|");
+        this.drawExpression((branch as UnaryOperation).exp, ++i, j - 2, lines);
+        break;
+      }
+
+      // Initialize state run only when "i" equal to 0 || undefined
+      case 0:
+        lines.push(`+${"=".repeat(22)} Exp AST ${"=".repeat(22)}+`);
+        for (let i = 0; i < 20; i++) lines.push(`|${" ".repeat(53)}|`);
+        lines.push(`+${"=".repeat(53)}+\n`);
+
+        this.drawExpression(branch, 2, 30, lines);
+        console.log();
+        for (let line of lines) console.log(" ".repeat(30) + line);
+        break;
+    }
+
+    // Create simple implementation splice for String
+    function spliceStr(str: string, index: number, rm: number, newStr: string) {
+      return str.substr(0, index) + newStr + str.substr(index + Math.abs(rm));
+    }
   }
 }
 
 export default Expression;
-
-// // Create simple implementation splice for String
-// String.prototype.splice = function (index, rm, str) {
-//   return this.substr(0, index) + str + this.substr(index + Math.abs(rm));
-// };
-
-// // Create a simple algorithm for drawing AST, it will improve
-// // Expression debugging
-// function drawExpression(branch, i, j, lines) {
-//   let { value, type, name } = branch;
-//   switch (i && type) {
-//     case "FLOAT":
-//     case "STR":
-//     case "VAR":
-//     case "INT":
-//       value += "";
-//       lines[i] = lines[i].splice(j, value.length, value);
-//       break;
-
-//     case "FUNC_CALL":
-//       lines[i] = lines[i].splice(j, name.length, name);
-//       break;
-
-//     case "Binary Operation":
-//       lines[i] = lines[i].splice(j - 3, value.length + 3, `[${value}]\ `);
-//       lines[++i] = lines[i].splice(j - 4, 5, "/   \\");
-//       lines[++i] = lines[i].splice(j - 5, 7, "/     \\");
-
-//       // Check the Left and Right side
-//       type = branch.left.type;
-//       drawExpression(branch.left, i + (type.includes("Operation") ? 1 : 0), j - 5, lines);
-//       if (branch.right.type.includes("Operation")) drawExpression(branch.right, ++i, j + 4, lines);
-//       else drawExpression(branch.right, i, j + 1, lines);
-//       break;
-
-//     case "Unary Operation":
-//       lines[i] = lines[i].splice(j - 3, value.length + 3, `[${value}]\ `);
-//       lines[++i] = lines[i].splice(j - 2, 1, "|");
-//       drawExpression(branch.exp, ++i, j - 2, lines);
-//       break;
-
-//     // Initialize state run only when "i" equal to 0 || undefined
-//     case undefined:
-//       lines = [];
-//       lines.push(`+${"=".repeat(22)} Exp AST ${"=".repeat(22)}+`);
-//       for (let i = 0; i < 20; i++) lines.push(`|${" ".repeat(53)}|`);
-//       lines.push(`+${"=".repeat(53)}+\n`);
-
-//       drawExpression(branch, 2, 30, lines);
-//       console.log();
-//       for (let line of lines) console.log(" ".repeat(30) + line);
-//       break;
-//   }
-// }
