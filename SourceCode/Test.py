@@ -1,6 +1,8 @@
 # Test
 
 def a():
-    b = -(1 ** -2) ** 4
+    while 1:
+        b = -(1 ** -2) ** a
+        break
 
 c = 1
