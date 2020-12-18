@@ -2,7 +2,8 @@ import ErrorHandler from "../Error/Error";
 import Statement from "./Statement/Statement";
 import { Token } from "../Lexer/Lexing";
 import { Operation } from "./Interfaces";
-import { Assign } from "./Statement/Interfaces";
+import { Assign, Condition, ForLoop } from "./Statement/Interfaces";
+import { getDefinedToken } from "../lib";
 
 class Parser {
   tokens: Token[][];
@@ -134,7 +135,9 @@ class Parser {
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
         this.currLevel.level++;
+        // TODO:
         // this.currLevel.body.push({ Statement: type.includes("WHILE") ? this.parseWhile() : this.parseFor() });
+        this.currLevel.body.push({ Statement: this.statement.parseWhile(this) });
 
         // Save previous data
         let header = JSON.parse(JSON.stringify(this.currLevel.header));
@@ -163,14 +166,15 @@ class Parser {
         this.index++;
 
         // Get the last loop
-        // let loop = this.getDefinedToken("Statement", "type", "WHILE", this.currLevel, false);
-        // loop = loop && !loop.body ? loop : this.getDefinedToken("Statement", "type", "FOR", this.currLevel, false);
+        let loop = getDefinedToken("Statement", "type", "WHILE", this.currLevel);
+        loop = loop && !(loop as Condition | ForLoop).body ? loop : getDefinedToken("Statement", "type", "FOR", this.currLevel);
 
         // Check if received loop even exist if so check if
         // We still working with it, if not the throw an error
-        // if (!loop || loop.body) this.errorMessageHandler(`${type.split(/\ /)[0]} outside of the loop`, this.tokens[this.line][this.index - 1]);
+        if (!loop || (loop as Condition | ForLoop).body)
+          this.err.message({ name: "SyntaxError", message: `${type.split(/\ /)[0]} outside of the loop`, ptr: this });
 
-        // this.currLevel.body.push({ Statement: { type: type.split(/\ /)[0].toUpperCase() } });
+        this.currLevel.body.push({ Statement: { type: type.split(/\ /)[0].toUpperCase() } });
         break;
 
       case "Pass":
@@ -226,34 +230,6 @@ class Parser {
 
     return true;
   }
-
-  // getDefinedToken(type, key, value, { body = [], header = [] }, alert = true) {
-  //   // Get all data that already defined
-  //   let defined = [...body, ...header];
-
-  //   // A simple polymorphism, sort of ~
-  //   if (Array.isArray(type)) return this.getDefinedTokenArray(type, key, value, defined);
-
-  //   // Check if variable is defined in the body or in the header (in the prev level)
-  //   let index = defined.map((obj) => obj[type] && obj[type][key]).lastIndexOf(value);
-
-  //   // If the variables is not defined then throw an Error
-  //   if (index == -1 && alert) this.errorMessageHandler(`Variable ${value} is not defined`, this.tokens[this.line][this.index - 1]);
-
-  //   return index != -1 ? defined[index][type] : undefined;
-  // }
-
-  // getDefinedTokenArray(types, key, value, defined) {
-  //   for (var type of types) {
-  //     var index = defined.map((obj) => obj[type] && obj[type][key]).lastIndexOf(value);
-  //     if (index != -1 && defined[index][type].type != "FUNC_CALL") break;
-  //   }
-
-  //   // If the variables is not defined then throw an Error
-  //   if (index == -1) this.errorMessageHandler(`Variable ${value} is not defined`, this.tokens[this.line][this.index - 1]);
-
-  //   return defined[index][type];
-  // }
 
   // checkOnBasicFunc(name) {
   //   for (let func in this.basicFunc) if (name == func) return { ...this.basicFunc[func], basic: true };

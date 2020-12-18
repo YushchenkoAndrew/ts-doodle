@@ -1,8 +1,7 @@
 import ErrorHandler from "../../Error/Error";
 import Parser from "../Parser";
 import Expression from "../Expression/Expression";
-import { Token } from "../../Lexer/Lexing";
-import { Declaration } from "../Interfaces";
+import { Declaration, Operation } from "../Interfaces";
 import { Assign, Condition, ForLoop, FuncCall } from "./Interfaces";
 
 class Statement {
@@ -13,10 +12,6 @@ class Statement {
     this.err = err;
     this.exp = new Expression(this.err);
   }
-
-  // stateChecker(key: string, token: Token, error: string, ...expect: string[]) {
-  //   if (!token || !token[key] || !this.isInclude(token[key], ...expect)) this.errorMessageHandler(error, token || { line: this.line, char: 0 });
-  // }
 
   // TODO: Improve this to be able to handle such syntax as => "def func(a, b = 2):"
   getParams(ptr: Parser, ...allowed: string[]): string[] {
@@ -47,7 +42,7 @@ class Statement {
 
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Indented Block is missing", ptr }, "Start Block");
-    return { type: "FUNC", name: `_${value}`, params: params, body: [], defined: { value: "", type: "INT", kind: 10 } };
+    return { type: "FUNC", name: `_${value}`, params: params, body: [], defined: { value: "", type: "ANY" } };
   }
 
   // function parseIf() {
@@ -113,15 +108,24 @@ class Statement {
   //   return level;
   // }
 
-  // function parseWhile() {
-  //   // Delete all spaces
-  //   this.tokens[this.line].push(...this.tokens[this.line].splice(this.index).filter((token) => token.type != "Space"));
-  //   this.stateChecker("type", this.tokens[this.line][this.index], "Wrong While loop declaration", "Variable", "Number", "String", "Unary", "Parentheses");
+  parseWhile(ptr: Parser): Condition {
+    // Delete all spaces
+    ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
+    this.err.checkObj(
+      "type",
+      ptr.tokens[ptr.line][ptr.index],
+      { name: "SyntaxError", message: "Wrong While loop initialization", ptr },
+      "Variable",
+      "Number",
+      "String",
+      "Unary",
+      "Parentheses"
+    );
 
-  //   let exp = this.parseExpression({});
-  //   this.stateChecker("type", this.tokens[this.line][this.index++], "Wrong While loop declaration", "Start Block");
-  //   return { type: "WHILE", Expression: exp, defined: this.type.curr };
-  // }
+    let exp = this.exp.parse(ptr);
+    this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong While loop initialization", ptr }, "Start Block");
+    return { type: "WHILE", Expression: exp, body: [] as Operation[] };
+  }
 
   // function parseFor() {
   //   // Delete all spaces
