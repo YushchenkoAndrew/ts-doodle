@@ -28,3 +28,7 @@ export interface ForLoop {
   range: FuncCall;
   body: Operation[];
 }
+
+export interface Command {
+  type: string;
+}

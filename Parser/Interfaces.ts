@@ -1,4 +1,4 @@
-import { Assign, Condition, ForLoop, FuncCall } from "./Statement/Interfaces";
+import { Assign, Command, Condition, ForLoop, FuncCall } from "./Statement/Interfaces";
 import { Types } from "./Expression/Interfaces";
 
 // Basics Interfaces for Parser
@@ -11,5 +11,7 @@ export interface Declaration {
 }
 
 export interface Operation {
-  [type: string]: Declaration | Assign | Condition | ForLoop | FuncCall;
+  [type: string]: OperationTypes;
 }
+
+export type OperationTypes = Declaration | Assign | Condition | ForLoop | FuncCall | Command;
