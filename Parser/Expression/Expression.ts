@@ -3,7 +3,8 @@ import allowedOperations from "./AllowedOperations.json";
 import Parser from "../Parser";
 import { Str, BinaryOperation, UnaryOperation, Types, AST, Var } from "./Interfaces";
 import ErrorHandler from "../../Error/Error";
-import { FuncCall } from "../Statement/Interfaces";
+import { FuncCall, Assign } from "../Statement/Interfaces";
+import { getDefinedToken } from "../../lib";
 
 class Expression {
   err: ErrorHandler;
@@ -55,20 +56,26 @@ class Expression {
         if (priority === null) return this.parseExpression(ptr, { params: constant, priority });
         return constant;
 
-      // case "Variable":
-      //   let { value } = ptr.tokens[ptr.line][ptr.index++];
+      case "Variable":
+        let { value } = ptr.tokens[ptr.line][ptr.index++];
 
-      //   // Change value of this.neg to unary because after a number can be only
-      //   // a binary operation
-      //   this.neg = "Binary";
-      //   let varType = this.checkOnBasicFunc(value) || this.getDefinedToken(["Statement", "Declaration"], "name", `_${value}`, this.currLevel);
+        // Change value of this.neg to unary because after a number can be only
+        // a binary operation
+        this.neg = "Binary";
+        // TODO:
+        // let varType = this.checkOnBasicFunc(value) || this.getDefinedToken(["Statement", "Declaration"], "name", `_${value}`, this.currLevel);
+        let varDeclaration = getDefinedToken(["Statement", "Declaration"], "name", `_${value}`, ptr.currLevel, () =>
+          this.err.message({ name: "NameError", message: `Such Name "${value}" is not defined`, ptr })
+        );
 
-      //   // Create Expression that depends on type, if it FUNC then call parserFuncCaller
-      //   varType = varType.type == "FUNC" ? this.parseFuncCaller() : { value: `_${value}`, type: "VAR", defined: varType.defined };
-      //   this.type = defineType(this.type, { ...varType.defined }, this.ast);
+        // Create Expression that depends on type, if it FUNC then call parserFuncCaller
+        // TODO:
+        // varType = varType.type == "FUNC" ? this.parseFuncCaller() : { value: `_${value}`, type: "VAR", defined: varType.defined };
+        let varType = { value: `_${value}`, type: "VAR", defined: (varDeclaration as Assign).defined } as Var;
+        this.type = defineType(this.type, { ...varType.defined }, this.ast);
 
-      //   if (!this.ast && priority != -1) return this.parseExpression({ params: varType });
-      //   return varType;
+        if (priority === null) return this.parseExpression(ptr, { params: varType });
+        return varType;
 
       case "Unary": {
         let currPriority = priorityTable[type];
