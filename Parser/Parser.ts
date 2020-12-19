@@ -1,8 +1,8 @@
 import ErrorHandler from "../Error/Error";
 import Statement from "./Statement/Statement";
 import { Token } from "../Lexer/Lexing";
-import { Operation } from "./Interfaces";
-import { Assign, Condition, ForLoop } from "./Statement/Interfaces";
+import { Operation, Declaration } from "./Interfaces";
+import { Assign, Condition, ForLoop, Return } from "./Statement/Interfaces";
 import { getDefinedToken } from "../lib";
 
 class Parser {
@@ -74,8 +74,8 @@ class Parser {
         body.slice(-1)[0].Declaration.body = this.currLevel.body;
 
         // Set the type of return value
-        // let define = this.getDefinedToken("Statement", "type", "RET", this.currLevel, false);
-        // if (define) body.slice(-1)[0].Declaration.defined = define.defined;
+        let define = getDefinedToken("Statement", "type", "RET", this.currLevel);
+        if (define) body.slice(-1)[0].Declaration.defined = (define as Return).defined;
 
         this.currLevel.level--;
         this.currLevel.header = header;
@@ -92,7 +92,7 @@ class Parser {
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
         this.currLevel.level++;
-        // this.currLevel.body.push({ Statement: this.parseIf() });
+        this.currLevel.body.push({ Statement: this.statement.parseIf(this) });
 
         // Save previous data
         let header = JSON.parse(JSON.stringify(this.currLevel.header));
@@ -107,7 +107,7 @@ class Parser {
         // (this "jump")
         level = this.initStateMachine(level + 1, true);
         body.slice(-1)[0].Statement.body = this.currLevel.body;
-        // if (checkLevel.call(this, level + 1, false)) level = this.parseElse(level, body);
+        if (this.checkLevel(level + 1, false)) level = this.statement.parseElse(this, level, body);
 
         // TODO:
         // Save all Assignment Statement into a header, not the best solution but works for now
@@ -130,14 +130,14 @@ class Parser {
 
       case "FOR":
       case "WHILE":
-        console.log(`WHILE:    LEVEL ${level}`, this.tokens[this.line][this.index]);
+        console.log(`${type.includes("WHILE") ? "WHILE:" : "FOR:  "}    LEVEL ${level}`, this.tokens[this.line][this.index]);
 
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
         this.currLevel.level++;
-        // TODO:
-        // this.currLevel.body.push({ Statement: type.includes("WHILE") ? this.parseWhile() : this.parseFor() });
-        this.currLevel.body.push({ Statement: this.statement.parseWhile(this) });
+        this.currLevel.body.push({
+          Statement: type.includes("WHILE") ? (this.statement.parseWhile(this) as Condition) : (this.statement.parseFor(this) as ForLoop),
+        });
 
         // Save previous data
         let header = JSON.parse(JSON.stringify(this.currLevel.header));
@@ -167,11 +167,11 @@ class Parser {
 
         // Get the last loop
         let loop = getDefinedToken("Statement", "type", "WHILE", this.currLevel);
-        loop = loop && !(loop as Condition | ForLoop).body ? loop : getDefinedToken("Statement", "type", "FOR", this.currLevel);
+        loop = loop && !(loop as Condition).body[0] ? loop : getDefinedToken("Statement", "type", "FOR", this.currLevel);
 
         // Check if received loop even exist if so check if
         // We still working with it, if not the throw an error
-        if (!loop || (loop as Condition | ForLoop).body)
+        if (!loop || (loop as Condition | ForLoop).body[0])
           this.err.message({ name: "SyntaxError", message: `${type.split(/\ /)[0]} outside of the loop`, ptr: this });
 
         this.currLevel.body.push({ Statement: { type: type.split(/\ /)[0].toUpperCase() } });
@@ -183,7 +183,15 @@ class Parser {
 
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
-        // this.currLevel.body.push({ Statement: this.parseReturn() });
+
+        // Get the last func
+        let func = getDefinedToken("Declaration", "type", "FUNC", this.currLevel);
+
+        // Check if received func even exist if so check if
+        // And we still working with it, if not the throw an error
+        if (!func || (func as Declaration).body[0]) this.err.message({ name: "SyntaxError", message: `${type.split(/\ /)[0]} outside of the func`, ptr: this });
+
+        this.currLevel.body.push({ Statement: this.statement.parseReturn(this) });
         break;
 
       case "Variable":
@@ -211,10 +219,6 @@ class Parser {
     }
 
     return this.initStateMachine(level);
-
-    //
-    // Addition Functions
-    //
   }
 
   checkLevel(level: number, force: boolean) {
