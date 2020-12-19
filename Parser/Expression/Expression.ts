@@ -27,8 +27,6 @@ class Expression {
     this.parentheses = 0;
 
     return this.parseExpression(ptr, {});
-
-    // return this.parseExpression(ptr, {});
   }
 
   /**
