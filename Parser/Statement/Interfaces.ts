@@ -8,6 +8,12 @@ export interface Assign {
   defined: Types;
 }
 
+export interface Return {
+  type: string;
+  Expression?: Types | AST;
+  defined: Types;
+}
+
 export interface FuncCall {
   type: string;
   name: string;
@@ -25,7 +31,7 @@ export interface Condition {
 export interface ForLoop {
   type: string;
   iter: string;
-  range: FuncCall;
+  range: FuncCall | Assign;
   body: Operation[];
 }
 
