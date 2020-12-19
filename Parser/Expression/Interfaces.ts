@@ -18,6 +18,12 @@ export interface Float {
   type: string;
 }
 
+export interface List {
+  type: string;
+  length: number;
+  defined: Types;
+}
+
 export interface Var {
   value: string;
   type: string;
@@ -39,5 +45,5 @@ export interface UnaryOperation {
   priority: number;
 }
 
-export type Types = Int | Str | Float | Var | FuncCall;
+export type Types = Int | Str | Float | Var | List | FuncCall;
 export type AST = BinaryOperation | UnaryOperation;
