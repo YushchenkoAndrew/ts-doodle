@@ -27,6 +27,8 @@ class Expression {
     this.parentheses = 0;
 
     return this.parseExpression(ptr, {});
+
+    // return this.parseExpression(ptr, {});
   }
 
   /**
@@ -187,14 +189,14 @@ class Expression {
           if (priority === null) return this.parseExpression(ptr, { params: right });
         } else this.parentheses--;
 
-        return right || this.ast || params;
+        return right || (priority !== null ? this.ast : params);
       }
 
       case "LINE_END":
       default:
         if (priority !== null) this.drawExpression(this.ast);
         if (this.parentheses != 0) this.err.message({ name: "TypeError", message: `Unmatched Parentheses`, ptr });
-        return priority ? this.ast : params;
+        return priority !== null ? this.ast : params;
     }
 
     function getLastBranch(keys: string[], priority: number, branch: AST): AST | undefined {
