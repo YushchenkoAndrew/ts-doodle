@@ -10,7 +10,7 @@ export function getDefinedToken(
   value: string,
   { body = [] as Operation[], header = [] as Operation[] },
   errFunc?: Function
-): OperationTypes {
+): OperationTypes | null {
   // Get all data that already defined
   let defined = [...body, ...header];
 
@@ -24,10 +24,10 @@ export function getDefinedToken(
   if (index == -1 && errFunc) errFunc();
   // errorMessageHandler(`Variable ${value} is not defined`, this.tokens[this.line][this.index - 1]);
 
-  return index != -1 ? defined[index][type] : ({} as OperationTypes);
+  return index != -1 ? defined[index][type] : null;
 }
 
-export function getDefinedTokenArray(types: string[], key: string, value: string, defined: Operation[], errFunc?: Function): OperationTypes {
+export function getDefinedTokenArray(types: string[], key: string, value: string, defined: Operation[], errFunc?: Function): OperationTypes | null {
   let index: number = -1;
   let prevType: string = "";
 
@@ -40,5 +40,5 @@ export function getDefinedTokenArray(types: string[], key: string, value: string
   // If the variables is not defined then throw an Error
   if (index == -1 && errFunc) errFunc();
 
-  return defined[index][prevType];
+  return index != -1 ? defined[index][prevType] : null;
 }
