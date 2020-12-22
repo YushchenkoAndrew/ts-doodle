@@ -4,6 +4,11 @@ export function isInclude(type: string, ...arr: string[]) {
   return false;
 }
 
+export function isEqual(type: string, ...arr: string[]) {
+  for (let i of arr) if (type === i) return true;
+  return false;
+}
+
 export function getDefinedToken(
   type: string | string[],
   key: string,
