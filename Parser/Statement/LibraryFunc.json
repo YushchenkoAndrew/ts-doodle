@@ -19,7 +19,7 @@
     "params": [
       {
         "type": "NONE",
-        "name": "end",
+        "name": "stop",
         "defined": { "value": "", "type": "INT", "kind": 10 }
       },
       {

@@ -146,9 +146,13 @@ class Statement {
 
     let { value } = ptr.tokens[ptr.line][ptr.index++];
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong For loop declaration", ptr }, "IN Keyword");
-    this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong For loop declaration", ptr }, "Variable");
+    this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong For loop declaration", ptr }, "Variable");
 
-    let range = this.parseVariable(ptr);
+    // TODO:
+    // Create simple solution for iterate though array witch located in the variable
+    let range = getDefinedToken("Statement", "name", `_${ptr.tokens[ptr.line][ptr.index++].value}`, ptr.currLevel, () =>
+      this.err.message({ name: "NameError", message: `Variable with this Name "${value}" is not defined`, ptr })
+    ) as Assign;
 
     // Check on LIST type
     this.err.checkObj("type", range.defined, { name: "TypeError", message: `${range.defined?.type ?? "Undeclared"} Object is Not Iterable`, ptr }, "LIST");
@@ -156,7 +160,7 @@ class Statement {
 
     // Create a {{value}} as a temporary variable that contain nothing
     ptr.currLevel.header.push({ Statement: { type: "VAR", name: `_${value}`, defined: (range.defined as List)?.defined } });
-    return { type: "FOR", iter: `_${value}`, range: range, body: [] as Operation[] };
+    return { type: "FOR", iter: `_${value}`, range: { value: range.name, type: "VAR", defined: range.defined }, body: [] as Operation[] };
   }
 
   parseReturn(ptr: Parser): Return {
@@ -200,7 +204,8 @@ class Statement {
       "Number",
       "String",
       "Unary",
-      "Parentheses"
+      "Parentheses",
+      "SquareBrackets"
     );
 
     // Check if it's assign with an operation
@@ -264,8 +269,6 @@ class Statement {
   private parseFuncCaller(ptr: Parser): FuncCall {
     let { value } = ptr.tokens[ptr.line][ptr.index++ - 1];
 
-    // TODO: To improve function name, they should contain a number at the end
-    // which will tell the amount of params/args
     let { type, params, defined } =
       (library[value] as Declaration) ??
       (getDefinedToken("Declaration", "name", `_${value}`, ptr.currLevel, () =>

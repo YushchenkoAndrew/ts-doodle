@@ -1,4 +1,4 @@
-import { Types, AST } from "../Expression/Interfaces";
+import { Types, AST, Var } from "../Expression/Interfaces";
 import { Operation } from "../Interfaces";
 
 export interface Assign {
@@ -31,7 +31,7 @@ export interface Condition {
 export interface ForLoop {
   type: string;
   iter: string;
-  range: FuncCall | Assign;
+  range: FuncCall | Var;
   body: Operation[];
 }
 
