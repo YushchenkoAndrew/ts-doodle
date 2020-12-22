@@ -1,7 +1,7 @@
 import priorityTable from "./PriorityTable.json";
 import allowedOperations from "./AllowedOperations.json";
 import Parser from "../Parser";
-import { Str, BinaryOperation, UnaryOperation, Types, AST, Var } from "./Interfaces";
+import { Str, BinaryOperation, UnaryOperation, Types, AST, Var, List } from "./Interfaces";
 import ErrorHandler from "../../Error/Error";
 import { FuncCall, Assign } from "../Statement/Interfaces";
 import { getDefinedToken } from "../../lib";
@@ -188,6 +188,52 @@ class Expression {
         } else this.parentheses--;
 
         return right || (priority !== null ? this.ast : params);
+      }
+
+      case "SquareBrackets": {
+        if (type.includes("Close")) return priority !== null ? this.ast : params;
+
+        let items = [];
+        ptr.index++;
+
+        // Save current state, for now save only current type maybe deal with
+        // prev type later
+        let prevState = { AST: copyTree(this.ast) as AST, type: {} as Types };
+
+        while (ptr.tokens[ptr.line][ptr.index] && !ptr.tokens[ptr.line][ptr.index].type.includes("Close")) {
+          this.err.checkObj(
+            "type",
+            ptr.tokens[ptr.line][ptr.index],
+            { name: "SyntaxError", message: "Wrong List Declaration", ptr },
+            "Number",
+            "String",
+            "Variable",
+            "Unary",
+            "Parentheses",
+            "SquareBrackets"
+          );
+
+          items.push(this.parse(ptr));
+
+          // Update list type based on type of the elements
+          if (!prevState.type.type) prevState.type = { ...this.type.curr };
+          else if (prevState.type.type != this.type.curr.type && prevState.type.type != "ANY") {
+            prevState.type = { value: "", type: "ANY" };
+          }
+
+          this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong List Declaration", ptr }, "Close", "Comma");
+          ptr.index += Number(ptr.tokens[ptr.line][ptr.index].type.includes("Comma"));
+        }
+
+        // Check one more time if exit from the loop was successful and it wasn't happened because of some
+        // sort of error
+        this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong List Declaration", ptr }, "Close");
+
+        // Restore previous state
+        this.type.curr = { type: "LIST", length: items.length, defined: { ...prevState.type } } as List;
+        this.ast = prevState.AST;
+
+        return { type: "LIST", value: items, length: items.length, defined: { ...this.type.curr } } as List;
       }
 
       case "LINE_END":
