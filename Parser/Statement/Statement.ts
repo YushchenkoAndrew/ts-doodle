@@ -5,6 +5,7 @@ import { Declaration, Operation } from "../Interfaces";
 import { Assign, Condition, ForLoop, FuncCall, Return } from "./Interfaces";
 import { getDefinedToken, isInclude } from "../../lib/";
 import { List, Types } from "../Expression/Interfaces";
+import library from "./LibraryFunc.json";
 
 class Statement {
   err: ErrorHandler;
@@ -228,7 +229,7 @@ class Statement {
       "Open Parentheses"
     );
 
-    for (let param of params) {
+    for (let [index, param] of params.entries()) {
       let type = param.defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "ANY"] : [param.defined.type];
 
       let argv = this.exp.parse(ptr);
@@ -237,12 +238,17 @@ class Statement {
       // TODO: Somehow update the final body
       // if (param.defined.type == "ANY") param.defined = this.type.curr;
 
-      args.push({ type: "NONE", name: "", Expression: argv, defined: curr });
+      args.push({ type: param.type, name: param.name, Expression: argv, defined: curr });
 
       // Check next step if it Close Parentheses then exit from the loop
       // Else check if the next token is comma
-      if (ptr.tokens[ptr.line][ptr.index]?.type == "Close Parentheses") break;
-      this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, "Comma");
+      if (ptr.tokens[ptr.line][ptr.index]?.type == "Close Parentheses" && (index == params.length - 1 || params[index + 1].Expression)) break;
+      this.err.checkObj(
+        "type",
+        ptr.tokens[ptr.line][ptr.index++],
+        { name: "SyntaxError", message: `Func missing ${params.length - index - 1} params`, ptr },
+        "Comma"
+      );
     }
 
     // Check on Closing Parentheses and restore previous State
@@ -260,17 +266,18 @@ class Statement {
 
     // TODO: To improve function name, they should contain a number at the end
     // which will tell the amount of params/args
+    let { type, params, defined } =
+      (library[value] as Declaration) ??
+      (getDefinedToken("Declaration", "name", `_${value}`, ptr.currLevel, () =>
+        this.err.message({ name: "NameError", message: `Func with this Name "${value}" is not defined`, ptr })
+      ) as Declaration);
 
-    type funcProperty = { params: Assign[]; defined: Types; basic?: any[]; require?: any[] };
-    // let { params, defined, basic, require = [] } = this.checkOnBasicFunc(value) || this.getDefinedToken("Declaration", "name", `_${value}`, this.currLevel);
-    let { params, defined, basic = [], require = [] }: funcProperty =
-      (getDefinedToken("Declaration", "name", `_${value}`, ptr.currLevel) as Declaration) ?? ({} as Declaration);
     let args = this.getArgs(ptr, params);
 
     return {
-      type: "FUNC_CALL",
-      name: basic ? `${value.toUpperCase()}${args.length}` : `_${value}`,
-      params: [...args, ...require],
+      type: `${type}_CALL`,
+      name: `_${value}`,
+      params: [...args],
       defined: defined,
     } as FuncCall;
   }

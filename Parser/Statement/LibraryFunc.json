@@ -1,0 +1,35 @@
+{
+  "print": {
+    "type": "LIBRARY",
+    "name": "print",
+    "params": [
+      {
+        "type": "NONE",
+        "name": "",
+        "defined": { "value": "", "type": "ANY" }
+      }
+    ],
+    "body": [],
+    "defined": { "value": "", "type": "NONE" }
+  },
+
+  "range": {
+    "type": "LIBRARY",
+    "name": "range",
+    "params": [
+      {
+        "type": "NONE",
+        "name": "end",
+        "defined": { "value": "", "type": "INT", "kind": 10 }
+      },
+      {
+        "type": "NONE",
+        "name": "step",
+        "Expression": { "value": "1", "type": "INT", "kind": 10 },
+        "defined": { "value": "", "type": "INT", "kind": 10 }
+      }
+    ],
+    "body": [],
+    "defined": { "value": "", "type": "NONE" }
+  }
+}
