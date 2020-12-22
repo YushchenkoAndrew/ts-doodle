@@ -19,6 +19,7 @@ export interface Float {
 }
 
 export interface List {
+  value: Types[];
   type: string;
   length: number;
   defined: Types;
