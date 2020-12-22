@@ -58,8 +58,12 @@
   "\t": "Block",
   ",": "Comma",
   ";": "Lines Separation",
+
   "(": "Open Parentheses",
   ")": "Close Parentheses",
+  "[": "Open SquareBrackets",
+  "]": "Close SquareBrackets",
+
   "'": "Quote Mark",
   "\"": "Quote Mark"
 }
