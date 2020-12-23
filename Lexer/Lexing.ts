@@ -12,7 +12,7 @@ class Lexing {
   lines: string[];
   tokens: Token[][] = [];
 
-  constructor(path: string = "Test") {
+  constructor(path: string = "Test.py") {
     console.log("\x1b[34m", "~ Start Lexing:", "\x1b[0m");
 
     // Text filtration

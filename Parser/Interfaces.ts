@@ -14,4 +14,9 @@ export interface Operation {
   [type: string]: OperationTypes;
 }
 
+export interface SyntaxTree {
+  type: string;
+  body: Operation[];
+}
+
 export type OperationTypes = Declaration | Assign | Condition | ForLoop | FuncCall | Return | Command;

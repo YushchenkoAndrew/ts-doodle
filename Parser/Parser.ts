@@ -1,7 +1,7 @@
 import ErrorHandler from "../Error/Error";
 import Statement from "./Statement/Statement";
 import { Token } from "../Lexer/Lexing";
-import { Operation, Declaration } from "./Interfaces";
+import { Operation, Declaration, SyntaxTree } from "./Interfaces";
 import { Assign, Condition, ForLoop, Return } from "./Statement/Interfaces";
 import { getDefinedToken } from "../lib";
 
@@ -10,7 +10,7 @@ class Parser {
   err: ErrorHandler;
   statement: Statement;
 
-  syntaxTree = { type: "SyntaxTree", body: [] as Operation[] };
+  syntaxTree: SyntaxTree = { type: "SyntaxTree", body: [] as Operation[] };
 
   line = 0; // Curr line
   index = 0; // Curr Index for tokens
@@ -235,13 +235,7 @@ class Parser {
     return true;
   }
 
-  // checkOnBasicFunc(name) {
-  //   for (let func in this.basicFunc) if (name == func) return { ...this.basicFunc[func], basic: true };
-
-  //   return;
-  // }
-
-  getTree(): { type: string; body: Operation[] } {
+  getTree(): SyntaxTree {
     return this.syntaxTree;
   }
 }
