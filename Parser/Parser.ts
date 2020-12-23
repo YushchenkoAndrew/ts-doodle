@@ -221,6 +221,7 @@ class Parser {
     return this.initStateMachine(level);
   }
 
+  // FIXME: Fix bug with ending file at some body level
   checkLevel(level: number, force: boolean) {
     if (this.currLevel.level - level < 0 || (force && this.currLevel.level != level)) {
       this.err.message({ name: "SyntaxError", message: `Wrong operation level`, ptr: this });

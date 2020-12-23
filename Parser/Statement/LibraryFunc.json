@@ -4,13 +4,13 @@
     "name": "print",
     "params": [
       {
-        "type": "NONE",
+        "type": "NULL",
         "name": "",
         "defined": { "value": "", "type": "ANY" }
       }
     ],
     "body": [],
-    "defined": { "value": "", "type": "NONE" }
+    "defined": { "value": "", "type": "NULL" }
   },
 
   "range": {
@@ -18,18 +18,18 @@
     "name": "range",
     "params": [
       {
-        "type": "NONE",
+        "type": "NULL",
         "name": "stop",
         "defined": { "value": "", "type": "INT", "kind": 10 }
       },
       {
-        "type": "NONE",
+        "type": "NULL",
         "name": "step",
         "Expression": { "value": "1", "type": "INT", "kind": 10 },
         "defined": { "value": "", "type": "INT", "kind": 10 }
       }
     ],
     "body": [],
-    "defined": { "value": "", "type": "NONE" }
+    "defined": { "value": "", "type": "NULL" }
   }
 }

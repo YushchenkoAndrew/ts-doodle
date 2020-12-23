@@ -17,7 +17,7 @@ export interface Return {
 export interface FuncCall {
   type: string;
   name: string;
-  params: Assign[];
+  params: (Assign | Types)[];
   defined: Types;
 }
 

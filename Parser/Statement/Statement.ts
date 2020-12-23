@@ -41,11 +41,11 @@ class Statement {
     // Create type "ANY" which is mean that variable is undefined
     // TODO: Think about it, do I need to create arguments (params) as Statements ?
     // Complete Expression part
-    let params = this.getParams(ptr, "Variable").map((param) => ({ type: "VAR", name: `_${param}`, defined: { value: "", type: "ANY" } } as Assign));
+    let params = this.getParams(ptr, "Variable").map((param) => ({ type: "VAR", name: param, defined: { value: "", type: "ANY" } } as Assign));
 
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Indented Block is missing", ptr }, "Start Block");
-    return { type: "FUNC", name: `_${value}`, params: params, body: [], defined: { value: "", type: "ANY" } };
+    return { type: "FUNC", name: value, params: params, body: [], defined: { value: "", type: "ANY" } };
   }
 
   parseIf(ptr: Parser): Condition {
@@ -150,7 +150,7 @@ class Statement {
 
     // TODO:
     // Create simple solution for iterate though array witch located in the variable
-    let range = getDefinedToken("Statement", "name", `_${ptr.tokens[ptr.line][ptr.index++].value}`, ptr.currLevel, () =>
+    let range = getDefinedToken("Statement", "name", ptr.tokens[ptr.line][ptr.index++].value, ptr.currLevel, () =>
       this.err.message({ name: "NameError", message: `Variable with this Name "${value}" is not defined`, ptr })
     ) as Assign;
 
@@ -159,8 +159,8 @@ class Statement {
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong For loop declaration", ptr }, "Start Block");
 
     // Create a {{value}} as a temporary variable that contain nothing
-    ptr.currLevel.header.push({ Statement: { type: "VAR", name: `_${value}`, defined: (range.defined as List)?.defined } });
-    return { type: "FOR", iter: `_${value}`, range: { value: range.name, type: "VAR", defined: range.defined }, body: [] as Operation[] };
+    ptr.currLevel.header.push({ Statement: { type: "VAR", name: value, defined: (range.defined as List)?.defined } });
+    return { type: "FOR", iter: value, range: { value: range.name, type: "VAR", defined: range.defined }, body: [] as Operation[] };
   }
 
   parseReturn(ptr: Parser): Return {
@@ -173,7 +173,7 @@ class Statement {
 
     // Check if the function return any of the type, if not then put as a return value '0'
     let { type } = ptr.tokens[ptr.line][ptr.index] || { type: "" };
-    if (!isInclude(type, "Variable", "Number", "Char", "String", "Unary", "Parentheses")) return { type: "RET", defined: { value: "", type: "NONE" } };
+    if (!isInclude(type, "Variable", "Number", "Char", "String", "Unary", "Parentheses")) return { type: "RET", defined: { value: "", type: "NULL" } };
     return { type: "RET", Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
   }
 
@@ -210,7 +210,7 @@ class Statement {
 
     // Check if it's assign with an operation
     // if (this.isInclude(type, "Add", "Sub", "Mul", "Div", "Mod", "Or", "And", "Xor", "SL", "SR")) changeToken(this.tokens[this.line], this.index - 1);
-    return { type: "VAR", name: `_${value}`, Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
+    return { type: "VAR", name: value, Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
   }
 
   //
@@ -218,8 +218,8 @@ class Statement {
   //          For this You need to add another variable which will link to the final
   //          Object
   //
-  private getArgs(ptr: Parser, params: Assign[]): Assign[] {
-    let args: Assign[] = [];
+  private getArgs(ptr: Parser, params: Assign[]): (Assign | Types)[] {
+    let args: (Assign | Types)[] = [];
     // TODO: Change ast copy from JSON to copyTree ...
     let prevState = {
       type: JSON.parse(JSON.stringify(this.exp.type)),
@@ -243,7 +243,7 @@ class Statement {
       // TODO: Somehow update the final body
       // if (param.defined.type == "ANY") param.defined = this.type.curr;
 
-      args.push({ type: param.type, name: param.name, Expression: argv, defined: curr });
+      args.push(argv);
 
       // Check next step if it Close Parentheses then exit from the loop
       // Else check if the next token is comma
@@ -271,7 +271,7 @@ class Statement {
 
     let { type, params, defined } =
       (library[value] as Declaration) ??
-      (getDefinedToken("Declaration", "name", `_${value}`, ptr.currLevel, () =>
+      (getDefinedToken("Declaration", "name", value, ptr.currLevel, () =>
         this.err.message({ name: "NameError", message: `Func with this Name "${value}" is not defined`, ptr })
       ) as Declaration);
 
@@ -279,7 +279,7 @@ class Statement {
 
     return {
       type: `${type}_CALL`,
-      name: `_${value}`,
+      name: value,
       params: [...args],
       defined: defined,
     } as FuncCall;

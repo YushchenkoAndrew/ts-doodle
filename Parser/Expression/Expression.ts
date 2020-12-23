@@ -64,14 +64,14 @@ class Expression {
         this.neg = "Binary";
         // TODO:
         // let varType = this.checkOnBasicFunc(value) || this.getDefinedToken(["Statement", "Declaration"], "name", `_${value}`, this.currLevel);
-        let varDeclaration = getDefinedToken(["Statement", "Declaration"], "name", `_${value}`, ptr.currLevel, () =>
+        let varDeclaration = getDefinedToken(["Statement", "Declaration"], "name", value, ptr.currLevel, () =>
           this.err.message({ name: "NameError", message: `Such Name "${value}" is not defined`, ptr })
         );
 
         // Create Expression that depends on type, if it FUNC then call parserFuncCaller
         // TODO:
         // varType = varType.type == "FUNC" ? this.parseFuncCaller() : { value: `_${value}`, type: "VAR", defined: varType.defined };
-        let varType = { value: `_${value}`, type: "VAR", defined: (varDeclaration as Assign).defined } as Var;
+        let varType = { value: value, type: "VAR", defined: (varDeclaration as Assign).defined } as Var;
         this.type = defineType(this.type, { ...varType.defined }, this.ast);
 
         if (priority === null) return this.parseExpression(ptr, { params: varType });
