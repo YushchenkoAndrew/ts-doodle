@@ -1,8 +1,10 @@
 import Expression from "../Expression/Expression";
 import { OperationTypes } from "../../Parser/Interfaces";
-import { Assign, Condition, FuncCall, Return } from "../../Parser/Statement/Interfaces";
+import { Assign, Condition, ForLoop, FuncCall, Return } from "../../Parser/Statement/Interfaces";
 import { Types } from "../../Parser/Expression/Interfaces";
 import Generator from "../CodeGenerator";
+import library from "../LibraryFunc.json";
+import { isInclude } from "../../lib/index";
 
 class Statement {
   exp: Expression;
@@ -13,6 +15,7 @@ class Statement {
 
   parse(ptr: Generator, tree: OperationTypes): string {
     let { type } = tree;
+    console.log(`Statement   : ${ptr.getTabLevel()}[${type}]`);
 
     switch (type) {
       case "VAR":
@@ -20,36 +23,48 @@ class Statement {
         return `let ${(tree as Assign).name} = ${this.exp.parse((tree as Assign).Expression ?? ({} as Types))};`;
 
       case "RET":
-        return `return ${this.exp.parse((tree as Return).Expression ?? ({} as Types))}`;
+        return `return ${this.exp.parse((tree as Return).Expression ?? ({} as Types))};`;
 
+      case "LIBRARY_CALL":
       case "FUNC_CALL":
-        return `${(tree as FuncCall).name}(${(tree as FuncCall).params.map((arg) => this.exp.parse(arg as Types)).join(", ")});`;
-
-      case "IF":
-        return `if (${this.exp.parse((tree as Condition).Expression)}) {\n` + ptr.parseBody((tree as Condition).body) + `\n${" ".repeat(ptr.level * 4)}}\n`;
+        return this.parseFuncCall(tree as FuncCall);
 
       case "WHILE":
-        // this.func.body.push(`; WHILE LOOP ${this.labels.loop}`);
-        // this.createWhileDistribution(tree, params);
-        break;
+      case "IF":
+        return this.parseIf(ptr, type.toLowerCase(), tree as Condition);
 
       case "FOR":
-        // this.func.body.push(`; FOR LOOP ${this.labels.loop}`);
-        // this.createForDistribution(tree, params);
-        break;
+        return (
+          `for (let ${(tree as ForLoop).iter} of ${this.exp.parse((tree as ForLoop).range)}) {\n` +
+          ptr.parseBody((tree as ForLoop).body) +
+          `\n${ptr.getTabLevel()}}`
+        );
 
       case "CONTINUE":
       case "BREAK":
-        // this.func.body.push("");
-        // this.func.body.push(`; ${type}`);
-        // this.func.body.push(`JMP @${type == "BREAK" ? "END" : "LOOP"}${this.labels.loop}`);
-        break;
+        return type.toLowerCase() + ";";
 
       default:
         console.log("Nooo");
     }
 
     return "";
+  }
+
+  private parseFuncCall({ name, params }: FuncCall) {
+    // Change function name from the json if it's a library one
+    name = isInclude(name, ...Object.keys(library)) ? library[name] : name;
+
+    // TODO: Allow to set the specific arg to value (allow Assign)
+    return `${name}(${params.map((arg) => this.exp.parse(arg as Types)).join(", ")});`;
+  }
+
+  private parseIf(ptr: Generator, type: string, { body, Expression: exp, else: elseBody }: Condition) {
+    let result = `${type} (${this.exp.parse(exp)}) {\n` + ptr.parseBody(body) + `\n${ptr.getTabLevel()}}`;
+    if (!elseBody) return result;
+
+    console.log(`Statement   : ${ptr.getTabLevel()}[ELSE]`);
+    return result + " else {\n" + ptr.parseBody(elseBody) + `\n${ptr.getTabLevel()}}`;
   }
 }
 
