@@ -235,7 +235,7 @@ class Statement {
     );
 
     for (let [index, param] of params.entries()) {
-      let type = param.defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "ANY"] : [param.defined.type];
+      let type = param.defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "LIST", "ANY"] : [param.defined.type];
 
       let argv = this.exp.parse(ptr);
       let curr = this.exp.type.curr.type == "INT" && type[0] == "FLOAT" ? { value: "", type: "FLOAT" } : this.exp.type.curr;
@@ -266,7 +266,7 @@ class Statement {
     return args;
   }
 
-  private parseFuncCaller(ptr: Parser): FuncCall {
+  parseFuncCaller(ptr: Parser): FuncCall {
     let { value } = ptr.tokens[ptr.line][ptr.index++ - 1];
 
     let { type, params, defined } =

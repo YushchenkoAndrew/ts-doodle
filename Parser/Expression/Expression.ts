@@ -62,7 +62,7 @@ class Expression {
         // Change value of this.neg to unary because after a number can be only
         // a binary operation
         this.neg = "Binary";
-        // TODO:
+        // TODO: + FIXME: Big with recalling variable
         // let varType = this.checkOnBasicFunc(value) || this.getDefinedToken(["Statement", "Declaration"], "name", `_${value}`, this.currLevel);
         let varDeclaration = getDefinedToken(["Statement", "Declaration"], "name", value, ptr.currLevel, () =>
           this.err.message({ name: "NameError", message: `Such Name "${value}" is not defined`, ptr })
@@ -71,7 +71,8 @@ class Expression {
         // Create Expression that depends on type, if it FUNC then call parserFuncCaller
         // TODO:
         // varType = varType.type == "FUNC" ? this.parseFuncCaller() : { value: `_${value}`, type: "VAR", defined: varType.defined };
-        let varType = { value: value, type: "VAR", defined: (varDeclaration as Assign).defined } as Var;
+        let varType =
+          varDeclaration?.type == "FUNC" ? ptr.statement.parseFuncCaller(ptr) : ({ value, type: "VAR", defined: (varDeclaration as Assign).defined } as Var);
         this.type = defineType(this.type, { ...varType.defined }, this.ast);
 
         if (priority === null) return this.parseExpression(ptr, { params: varType });
