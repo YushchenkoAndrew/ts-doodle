@@ -3,21 +3,24 @@
 def main(a):
     def test():
         return 1
-#     while (1):
-#         b = -(1 ** -2) ** a
-#         break
+    while (1):
+        # b = -(1 ** -2) ** a
+        # b = 1 + 2 * 2 - 3 * 2 / test()
+        b = test()
+        break
 
-    return "5"
+    return a + -2 * 2 - 3 * 2 / test()
 
 c = 1
 
-main(1)
+print(main(1))
 
 if c:
-    a = 1
+    n = 1
 
 b = 3
-# a = [1 * 2 - 1 * 3 + 5, 2, 3 + 2]
+a = [5, 4, 3, 2, 1]
+print(a)
 
-# for i in a:
-#     print(0)
+for i in a:
+    print(i)
