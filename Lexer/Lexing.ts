@@ -8,16 +8,21 @@ export interface Token {
   char: number;
 }
 
+interface Lexer {
+  path?: string;
+  text?: string;
+}
+
 class Lexing {
   lines: string[];
   tokens: Token[][] = [];
 
-  constructor(path: string = "Test.py") {
+  constructor({ path = "", text = "" }: Lexer) {
     console.log("\x1b[34m", "~ Start Lexing:", "\x1b[0m");
 
     // Text filtration
     // Read code and delete all commentaries from it
-    this.lines = textFiltration(readFileSync(path, "utf-8"));
+    this.lines = textFiltration(path ? readFileSync(path, "utf-8") : text);
 
     // Additional Functions
     function textFiltration(text: string): string[] {
