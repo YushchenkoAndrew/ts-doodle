@@ -27,7 +27,7 @@ class Generator {
   start(fileName: string = "Test.ts") {
     if (this.syntaxTree.type != "Program") return;
 
-    writeFileSync(fileName, this.parseBody(this.syntaxTree.body));
+    writeFileSync(fileName, this.parseBody(this.syntaxTree.body) + "\n");
   }
 
   parseBody(body: Operation[]): string {

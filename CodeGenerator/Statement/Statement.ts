@@ -3,7 +3,7 @@ import { OperationTypes } from "../../Parser/Interfaces";
 import { Assign, Condition, ForLoop, FuncCall, Return } from "../../Parser/Statement/Interfaces";
 import { Types } from "../../Parser/Expression/Interfaces";
 import Generator from "../CodeGenerator";
-import library from "../LibraryFunc.json";
+import library from "../LibraryFunc";
 import { isInclude } from "../../lib/index";
 
 class Statement {
@@ -19,8 +19,7 @@ class Statement {
 
     switch (type) {
       case "VAR":
-        // FIXME: Initialize variable if it needs to + Add (") to STR
-        return `let ${(tree as Assign).name} = ${this.exp.parse((tree as Assign).Expression ?? ({} as Types))};`;
+        return this.parseVariable(tree as Assign);
 
       case "RET":
         return `return ${this.exp.parse((tree as Return).Expression ?? ({} as Types))};`;
@@ -45,18 +44,24 @@ class Statement {
         return type.toLowerCase() + ";";
 
       default:
-        console.log("Nooo");
+        console.log("Nooo", type);
     }
 
     return "";
   }
 
+  private parseVariable({ name, init, binOpr, Expression: exp = {} as Types }: Assign) {
+    return `${init ? "let " : ""}${name} ${binOpr}= ${this.exp.parse(exp)};`;
+  }
+
   private parseFuncCall({ name, params }: FuncCall) {
+    let args = params.map((arg) => this.exp.parse(arg as Types));
+
     // Change function name from the json if it's a library one
-    name = isInclude(name, ...Object.keys(library)) ? library[name] : name;
+    if (!isInclude(name, ...Object.keys(library))) return `${name}(${args.join(", ")});`;
 
     // TODO: Allow to set the specific arg to value (allow Assign)
-    return `${name}(${params.map((arg) => this.exp.parse(arg as Types)).join(", ")});`;
+    return library[name](args) + ";";
   }
 
   private parseIf(ptr: Generator, type: string, { body, Expression: exp, else: elseBody }: Condition) {
