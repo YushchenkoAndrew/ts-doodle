@@ -1,23 +1,8 @@
-function main(a: any) {
-  function test() {
-    return 1;
-  }
-
-  while (1) {
-    let b = test();
-    break;
-  }
-  return a + -2 * 2 - 3 * 2 / test();
+function sum(a: number, b: number) {
+  return a + b + 0;
 }
 
-let c = 1;
-console.log(main(1));
-if (c) {
-  let n = 1;
-}
-let b = 3;
-let a = [5, 4, 3, 2, 1];
-console.log(a);
-for (let i of a) {
-  console.log(i);
-}
+let c = 1 + 2;
+console.log(9 / c);
+console.log(Array(Math.trunc((10 - 1) / c)).fill(1).map((x, y) => x + y * c), 1);
+let a = [1, 2, 3];
