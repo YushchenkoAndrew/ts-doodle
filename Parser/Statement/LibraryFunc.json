@@ -7,8 +7,19 @@
         "type": "NULL",
         "name": "",
         "defined": { "value": "", "type": "ANY" }
+      },
+      {
+        "type": "NULL",
+        "name": "sep",
+        "defined": { "value": " ", "type": "string", "length": 1 }
+      },
+      {
+        "type": "NULL",
+        "name": "end",
+        "defined": { "value": "\n", "type": "string", "length": 1 }
       }
     ],
+    "range": { "min": "1", "max": "Infinity" },
     "body": [],
     "defined": { "value": "", "type": "NULL" }
   },
@@ -17,6 +28,11 @@
     "type": "LIBRARY",
     "name": "range",
     "params": [
+      {
+        "type": "NULL",
+        "name": "start",
+        "defined": { "value": "", "type": "INT", "kind": 10 }
+      },
       {
         "type": "NULL",
         "name": "stop",
@@ -29,7 +45,8 @@
         "defined": { "value": "", "type": "INT", "kind": 10 }
       }
     ],
+    "range": { "min": "3", "max": "3" },
     "body": [],
-    "defined": { "value": "", "type": "NULL" }
+    "defined": { "value": "", "type": "LIST", "length": -1, "defined": { "type": "INT", "kind": 10 } }
   }
 }
