@@ -5,6 +5,9 @@ import { Str, BinaryOperation, UnaryOperation, Types, AST, Var, List } from "./I
 import ErrorHandler from "../../Error/Error";
 import { FuncCall, Assign } from "../Statement/Interfaces";
 import { getDefinedToken } from "../../lib";
+import { Declaration, OperationTypes } from "../Interfaces";
+import library from "../Statement/LibraryFunc.json";
+import { isInclude } from "../../lib/index";
 
 class Expression {
   err: ErrorHandler;
@@ -48,11 +51,11 @@ class Expression {
         // a binary operation
         this.neg = "Binary";
 
-        // FIXME: Fix the bug with such syntax => "a = 2 3"
+        // Check on this syntax => "a = 2 3"
+        if (params.type) this.err.message({ name: "SyntaxError", message: `Such syntax is invalid`, ptr });
 
         // If this.ast is not define then call parseExpression, it's need for start
         // up the recursion
-        // if (!priority && priority != -1) return this.parseExpression(ptr, { params: constant, priority });
         if (priority === null) return this.parseExpression(ptr, { params: constant, priority });
         return constant;
 
@@ -64,15 +67,18 @@ class Expression {
         this.neg = "Binary";
         // TODO: + FIXME: Big with recalling variable
         // let varType = this.checkOnBasicFunc(value) || this.getDefinedToken(["Statement", "Declaration"], "name", `_${value}`, this.currLevel);
-        let varDeclaration = getDefinedToken(["Statement", "Declaration"], "name", value, ptr.currLevel, () =>
-          this.err.message({ name: "NameError", message: `Such Name "${value}" is not defined`, ptr })
-        );
+        let varDeclaration =
+          (library[value] as OperationTypes) ??
+          getDefinedToken(["Statement", "Declaration"], "name", value, ptr.currLevel, () =>
+            this.err.message({ name: "NameError", message: `Such Name "${value}" is not defined`, ptr })
+          );
 
         // Create Expression that depends on type, if it FUNC then call parserFuncCaller
         // TODO:
         // varType = varType.type == "FUNC" ? this.parseFuncCaller() : { value: `_${value}`, type: "VAR", defined: varType.defined };
-        let varType =
-          varDeclaration?.type == "FUNC" ? ptr.statement.parseFuncCaller(ptr) : ({ value, type: "VAR", defined: (varDeclaration as Assign).defined } as Var);
+        let varType = isInclude(varDeclaration?.type ?? " ", "FUNC", "LIBRARY")
+          ? ptr.statement.parseFuncCaller(ptr)
+          : ({ value, type: "VAR", defined: (varDeclaration as Assign).defined } as Var);
         this.type = defineType(this.type, { ...varType.defined }, this.ast);
 
         if (priority === null) return this.parseExpression(ptr, { params: varType });
