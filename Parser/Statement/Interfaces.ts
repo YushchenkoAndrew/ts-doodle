@@ -4,6 +4,8 @@ import { Operation } from "../Interfaces";
 export interface Assign {
   type: string;
   name: string;
+  init: boolean;
+  binOpr: string;
   Expression?: Types | AST;
   defined: Types;
 }
