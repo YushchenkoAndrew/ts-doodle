@@ -1,8 +1,15 @@
-function sum(a: number, b: number) {
-  return a + b + 0;
+function fact(x: any): any {
+  if (x) {
+    return fact(x - 1) * x;
+  }
+  return 1;
 }
 
-let c = 1 + 2;
-console.log(9 / c);
-console.log(Array(Math.trunc((10 - 1) / c)).fill(1).map((x, y) => x + y * c), 1);
-let a = [1, 2, 3];
+function sin(x: any, sign: any, i: any, n: any): any {
+  if (i < n) {
+    return ((sign * (Math.pow(x, i))) / fact(i)) + sin(x, sign * -1, i + 2, n);
+  }
+  return 0;
+}
+
+console.log("sin(pi / 2) =", sin(1.5707963268, 1, 1, 20));

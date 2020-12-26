@@ -5,14 +5,14 @@ import Generator from "./CodeGenerator/CodeGenerator";
 dotenv.config();
 
 function main() {
-  let lexing = new Lexing(process.env.FILE_IN);
+  let lexing = new Lexing({ path: process.env.FILE_IN });
   lexing.defineTokens();
 
   let parser = new Parser(lexing.getTokens());
   parser.start();
 
   let generator = new Generator(parser.getTree());
-  generator.start(process.env.FILE_OUT);
+  generator.save(process.env.FILE_OUT);
 }
 
 main();

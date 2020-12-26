@@ -1,24 +1,12 @@
-# Test
+def fact(x):
+    if x:
+        return fact(x - 1) * x
+    return 1
 
-def sum(a, b):
+def sin(x, sign, i, n):
+    if (i < n):
+        return sign * x ** i / fact(i) + sin(x, sign * -1, i + 2, n)
+    return 0
 
-    return a + b + 0
 
-c = 1 + 2
-
-# print(main(1, 2), 1, 2, 3, 4)
-print(9 / c)
-print(range(1, 10, c), 1)
-
-# range(1, 10, 1)
-# print()
-
-# if c:
-#     n = 1
-
-# b = 3
-a = [1, 2, 3]
-# print(a)
-
-# for i in a:
-#     print(i)
+print("sin(pi / 2) =", sin(1.5707963268, 1, 1, 20))
