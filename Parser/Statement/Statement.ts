@@ -259,7 +259,7 @@ class Statement {
 
       // Check next step if it Close Parentheses then exit from the loop
       // Else check if the next token is comma
-      if (ptr.tokens[ptr.line][ptr.index]?.type == "Close Parentheses" && i == Number(range.min) - 1) break;
+      if (ptr.tokens[ptr.line][ptr.index]?.type == "Close Parentheses" && index >= Number(range.min) - 1) break;
       this.err.checkObj(
         "type",
         ptr.tokens[ptr.line][ptr.index++],
