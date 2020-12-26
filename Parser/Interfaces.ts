@@ -6,8 +6,14 @@ export interface Declaration {
   type: string;
   name: string;
   params: Assign[];
+  range: Range;
   body: Operation[];
   defined: Types;
+}
+
+export interface Range {
+  min: string | number;
+  max: string | number;
 }
 
 export interface Operation {
