@@ -1,7 +1,7 @@
 import ErrorHandler from "../../Error/Error";
 import Parser from "../Parser";
 import Expression from "../Expression/Expression";
-import { Declaration, Operation } from "../Interfaces";
+import { Declaration, Operation, Range } from "../Interfaces";
 import { Assign, Condition, ForLoop, FuncCall, Return } from "./Interfaces";
 import { getDefinedToken, isInclude } from "../../lib/";
 import { List, Types } from "../Expression/Interfaces";
@@ -42,10 +42,11 @@ class Statement {
     // TODO: Think about it, do I need to create arguments (params) as Statements ?
     // Complete Expression part
     let params = this.getParams(ptr, "Variable").map((param) => ({ type: "VAR", name: param, defined: { value: "", type: "ANY" } } as Assign));
+    let range = { min: params.length, max: params.length };
 
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Indented Block is missing", ptr }, "Start Block");
-    return { type: "FUNC", name: value, params: params, body: [], defined: { value: "", type: "ANY" } };
+    return { type: "FUNC", name: value, params: params, range, body: [], defined: { value: "", type: "ANY" } };
   }
 
   parseIf(ptr: Parser): Condition {
@@ -194,7 +195,7 @@ class Statement {
 
   private parseVariableAssign(ptr: Parser): Assign {
     let { value } = ptr.tokens[ptr.line][ptr.index - 1];
-    let { type } = ptr.tokens[ptr.line][ptr.index++];
+    let { type, value: binOpr } = ptr.tokens[ptr.line][ptr.index++];
 
     this.err.checkObj(
       "type",
@@ -208,9 +209,14 @@ class Statement {
       "SquareBrackets"
     );
 
-    // Check if it's assign with an operation
-    // if (this.isInclude(type, "Add", "Sub", "Mul", "Div", "Mod", "Or", "And", "Xor", "SL", "SR")) changeToken(this.tokens[this.line], this.index - 1);
-    return { type: "VAR", name: value, Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
+    // let range = getDefinedToken("Statement", "name", ptr.tokens[ptr.line][ptr.index++].value, ptr.currLevel, () =>
+    let init = !getDefinedToken("Statement", "name", value, ptr.currLevel);
+    binOpr = binOpr.replace(/=/g, "");
+
+    // TODO:
+    // Check if it's assign with an operation and it's specific to the input language
+    // if (isInclude(type, "Add", "Sub", "Mul", "Div", "Mod", "Or", "And", "Xor", "SL", "SR")) console.log("TODO:");
+    return { type: "VAR", name: value, init, binOpr, Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
   }
 
   //
@@ -218,8 +224,10 @@ class Statement {
   //          For this You need to add another variable which will link to the final
   //          Object
   //
-  private getArgs(ptr: Parser, params: Assign[]): (Assign | Types)[] {
+  private getArgs(ptr: Parser, params: Assign[], range: Range): (Assign | Types)[] {
     let args: (Assign | Types)[] = [];
+    let index = -1;
+
     // TODO: Change ast copy from JSON to copyTree ...
     let prevState = {
       type: JSON.parse(JSON.stringify(this.exp.type)),
@@ -234,8 +242,12 @@ class Statement {
       "Open Parentheses"
     );
 
-    for (let [index, param] of params.entries()) {
-      let type = param.defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "LIST", "ANY"] : [param.defined.type];
+    // Create a while loop that need to goes trough all params
+    // Now it's possible to compile such syntax "...[1, 2, 3]"
+    // Because range.max can contain an Infinity value
+    while (++index < Number(range.max)) {
+      let i = index < Number(range.min) ? index : Number(range.min) - 1;
+      let type = params[i].defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "LIST", "ANY"] : [params[i].defined.type];
 
       let argv = this.exp.parse(ptr);
       let curr = this.exp.type.curr.type == "INT" && type[0] == "FLOAT" ? { value: "", type: "FLOAT" } : this.exp.type.curr;
@@ -247,11 +259,11 @@ class Statement {
 
       // Check next step if it Close Parentheses then exit from the loop
       // Else check if the next token is comma
-      if (ptr.tokens[ptr.line][ptr.index]?.type == "Close Parentheses" && (index == params.length - 1 || params[index + 1].Expression)) break;
+      if (ptr.tokens[ptr.line][ptr.index]?.type == "Close Parentheses" && i == Number(range.min) - 1) break;
       this.err.checkObj(
         "type",
         ptr.tokens[ptr.line][ptr.index++],
-        { name: "SyntaxError", message: `Func missing ${params.length - index - 1} params`, ptr },
+        { name: "SyntaxError", message: `Func missing ${params.length - i - 1} params`, ptr },
         "Comma"
       );
     }
@@ -269,13 +281,13 @@ class Statement {
   parseFuncCaller(ptr: Parser): FuncCall {
     let { value } = ptr.tokens[ptr.line][ptr.index++ - 1];
 
-    let { type, params, defined } =
+    let { type, params, range, defined } =
       (library[value] as Declaration) ??
       (getDefinedToken("Declaration", "name", value, ptr.currLevel, () =>
         this.err.message({ name: "NameError", message: `Func with this Name "${value}" is not defined`, ptr })
       ) as Declaration);
 
-    let args = this.getArgs(ptr, params);
+    let args = this.getArgs(ptr, params, range);
 
     return {
       type: `${type}_CALL`,
