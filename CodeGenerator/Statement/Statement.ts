@@ -19,7 +19,7 @@ class Statement {
 
     switch (type) {
       case "VAR":
-        return this.parseVariable(tree as Assign);
+        return this.parseVariable(ptr.getType((tree as Assign).defined), tree as Assign);
 
       case "RET":
         return `return ${this.exp.parse((tree as Return).Expression ?? ({} as Types))};`;
@@ -50,8 +50,8 @@ class Statement {
     return "";
   }
 
-  private parseVariable({ name, init, binOpr, Expression: exp = {} as Types }: Assign) {
-    return `${init ? "let " : ""}${name} ${binOpr}= ${this.exp.parse(exp)};`;
+  private parseVariable(type: string, { name, init, binOpr, Expression: exp = {} as Types, defined }: Assign) {
+    return `${init ? "let " : ""}${name}: ${type} ${binOpr}= ${this.exp.parse(exp)};`;
   }
 
   private parseFuncCall({ name, params }: FuncCall) {

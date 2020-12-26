@@ -34,7 +34,8 @@ class Expression {
 
   private parseBinOperation({ value, left, right = {} as Types }: BinaryOperation) {
     // The flag shows BinaryOperations that different and depends strictly on language
-    if (isInclude(value, ...Object.keys(commands))) return commands[value](this.parse(left), this.parse(right));
+    // if (isInclude(value, ...Object.keys(commands))) return commands[value](this.parse(left), this.parse(right));
+    let flag = !isInclude(value, ...Object.keys(commands));
 
     // Get binary state
     let state = [left, right].reduce((acc, curr, i) => acc + Number(curr.type == "Binary Operation") * Math.pow(2, i), 0);
@@ -42,30 +43,27 @@ class Expression {
     switch (state) {
       // Next left and right values a Constant
       case 0:
-        return `${this.parse(left)} ${value} ${this.parse(right)}`;
+        return flag ? `${this.parse(left)} ${value} ${this.parse(right)}` : commands[value](this.parse(left), this.parse(right));
 
       // Next Left value is Operation and the right is Constant
       case 1:
-        return `(${this.parse(left)}) ${value} ${this.parse(right)}`;
+        return flag ? `(${this.parse(left)}) ${value} ${this.parse(right)}` : commands[value](`(${this.parse(left)})`, this.parse(right));
 
       // Next right value is Operation and the left is Constant
       case 2:
-        return `${this.parse(left)} ${value} (${this.parse(right)})`;
+        return flag ? `${this.parse(left)} ${value} (${this.parse(right)})` : commands[value](this.parse(left), `(${this.parse(right)})`);
 
       // Both left and right are Operations
       case 3:
-        return `(${this.parse(left)}) ${value} (${this.parse(right)})`;
+        return flag ? `(${this.parse(left)}) ${value} (${this.parse(right)})` : commands[value](`(${this.parse(left)})`, `(${this.parse(right)})`);
     }
 
     return "";
   }
 
   private parserUnaryOperation({ value, exp }: UnaryOperation) {
-    if (!isInclude(value, ...Object.keys(commands))) return `${value}${this.parse(exp)}`;
-
-    // TODO:
-    // Some other BinaryOperations that different and depends strictly on language
-    return "";
+    // Some other Unary Operation that different and depends strictly on language
+    return !isInclude(value, ...Object.keys(commands)) ? `${value}${this.parse(exp)}` : commands[value](this.parse(exp));
   }
 
   private parseFuncCall({ name, params }: FuncCall) {
