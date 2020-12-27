@@ -1,13 +1,15 @@
+import * as dotenv from "dotenv";
 import priorityTable from "./PriorityTable.json";
 import allowedOperations from "./AllowedOperations.json";
 import Parser from "../Parser";
 import { Str, BinaryOperation, UnaryOperation, Types, AST, Var, List } from "./Interfaces";
 import ErrorHandler from "../../Error/Error";
 import { FuncCall, Assign } from "../Statement/Interfaces";
-import { getDefinedToken } from "../../lib";
+import { getDefinedToken, copyTree } from "../../lib";
 import { Declaration, OperationTypes } from "../Interfaces";
 import library from "../Statement/LibraryFunc.json";
 import { isInclude } from "../../lib/index";
+dotenv.config();
 
 class Expression {
   err: ErrorHandler;
@@ -79,7 +81,11 @@ class Expression {
         let varType = isInclude(varDeclaration?.type ?? " ", "FUNC", "LIBRARY")
           ? ptr.statement.parseFuncCaller(ptr)
           : ({ value, type: "VAR", defined: (varDeclaration as Assign).defined } as Var);
-        this.type = defineType(this.type, { ...varType.defined }, this.ast);
+
+        // Check if current variable has any type if so then send itself, else
+        // the AST, this need for such situation => (a + b), where a => "ANY",
+        // b => "INT"
+        this.type = defineType(this.type, { ...varType.defined }, varType.defined.type == "ANY" ? varType : this.ast);
 
         if (priority === null) return this.parseExpression(ptr, { params: varType });
         return varType;
@@ -117,6 +123,10 @@ class Expression {
         // Unary operation
         this.neg = "Unary";
 
+        // Create basic structure for AST, it's need to be done before getting
+        // right part of Operation because of the function definedType
+        if (priority === null) this.ast = { type: "Binary Operation", value: operator, left: params, right: undefined, priority: currPriority };
+
         let right = this.parseExpression(ptr, { priority: currPriority });
         this.err.checkObj(
           "type",
@@ -127,7 +137,7 @@ class Expression {
 
         // Initialize a basic AST if the AST is not define
         if (priority === null) {
-          this.ast = { type: "Binary Operation", value: operator, left: params, right: undefined, priority: currPriority };
+          // this.ast = { type: "Binary Operation", value: operator, left: params, right: undefined, priority: currPriority };
           let branch = getLastBranch(["left", "exp"], currPriority, params as AST);
 
           // If Unary operation have a lower priority than the Binary operation, then swap them
@@ -140,7 +150,7 @@ class Expression {
               priority: currPriority,
             } as AST;
             this.ast = copyTree(params) as AST;
-          } else this.ast.right = right;
+          } else (this.ast as BinaryOperation).right = right;
 
           return this.parseExpression(ptr, { priority: currPriority });
         }
@@ -245,7 +255,7 @@ class Expression {
 
       case "LINE_END":
       default:
-        if (priority !== null) this.drawExpression(this.ast);
+        if (priority !== null && process.env.DEBUG) this.drawExpression(this.ast);
         if (this.parentheses != 0) this.err.message({ name: "TypeError", message: `Unmatched Parentheses`, ptr });
         return priority !== null ? this.ast : params;
     }
@@ -256,11 +266,9 @@ class Expression {
     }
 
     function updateBranch(branch: AST | Types, data: AST | Types) {
-      // FIXME: Bug with coping, example a % 2 == 0 it will
-      // create a strange tree where it'll check '==' twice
-
-      // data = copyTree(data);
-      data = JSON.parse(JSON.stringify(data));
+      // TODO: Check on different examples is it works fine
+      data = copyTree(data);
+      // data = JSON.parse(JSON.stringify(data));
 
       if ((branch as UnaryOperation).exp) {
         delete (branch as { exp?: AST }).exp;
@@ -268,12 +276,22 @@ class Expression {
         (branch as BinaryOperation).right = {} as AST;
       }
 
-      for (let key in data) branch[key] = JSON.parse(JSON.stringify(data[key]));
+      // TODO: Check on different examples is it works fine
+      // for (let key in data) branch[key] = JSON.parse(JSON.stringify(data[key]));
+      for (let key in data) branch[key] = isInclude(key, "left", "right", "exp") ? copyTree(data[key]) : data[key];
+      // console.log("*****");
+      // console.log(branch, data);
     }
 
-    function defineType({ prev, curr }: { prev: Types; curr: Types }, next: Types, branch: AST) {
+    function defineType({ prev, curr }: { prev: Types; curr: Types }, next: Types, branch: AST | Types) {
       delete (next as { value?: string }).value;
+
+      // Line bellow handle current situation => (0 + b) where b => defined as { type: "ANY" }
+      if (curr.type) defineAnyType(curr, branch);
+
+      // Line bellow help with such situation => (a + b + 1) where a, b => defined as { type: "ANY" }
       defineAnyType(next, branch);
+
       if (!curr.type || curr.type == "ANY") curr = { ...next };
       else if (curr.type == "STR") (next as Str).length += (curr as Str).length;
       return { prev: { ...curr }, curr: (curr.type == "FLOAT" && next.type == "INT") || next.type == "ANY" ? { ...curr } : { ...next } };
@@ -283,14 +301,10 @@ class Expression {
       if ("left" in branch) defineAnyType(type, branch.left);
       if ("right" in branch) defineAnyType(type, branch.right);
       if ("exp" in branch) defineAnyType(type, branch.exp);
-      if (branch.type == "VAR" && (branch as Var).defined.type == "ANY") updateBranch((branch as Var).defined, type);
-    }
-
-    function copyTree(branch: AST | Types): AST | Types {
-      let obj = {} as AST;
-      for (let key in branch) obj[key] = obj[key] instanceof Object && key != "defined" ? copyTree(branch[key]) : branch[key];
-
-      return obj;
+      if (branch.type == "VAR" && (branch as Var).defined.type == "ANY") {
+        updateBranch((branch as Var).defined, type);
+        // console.log("Yeee", branch);
+      }
     }
   }
 
@@ -301,15 +315,15 @@ class Expression {
     switch (type.split(/\ /g)[0] || type) {
       case "Bin":
         if (isNaN(parseInt(value.substr(2), 2))) break;
-        return { value: `${value.substr(2)}B`, type: "INT", kind: 2 };
+        return { value: `0b${value.substr(2)}`, type: "INT", kind: 2 };
 
       case "Oct":
         if (isNaN(parseInt(value.substr(2), 8))) break;
-        return { value: `${value.substr(2)}O`, type: "INT", kind: 8 };
+        return { value: `0o${value.substr(2)}`, type: "INT", kind: 8 };
 
       case "Hex":
         if (isNaN(parseInt(value.substr(2), 16))) break;
-        return { value: `0${value.substr(2)}H`, type: "INT", kind: 16 };
+        return { value: `0x${value.substr(2)}`, type: "INT", kind: 16 };
 
       case "Float":
         return { value: value, type: "FLOAT" };
