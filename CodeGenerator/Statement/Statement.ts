@@ -51,7 +51,8 @@ class Statement {
   }
 
   private parseVariable(type: string, { name, init, binOpr, Expression: exp = {} as Types, defined }: Assign) {
-    return `${init ? "let " : ""}${name}: ${type} ${binOpr}= ${this.exp.parse(exp)};`;
+    if (init) return `let ${name}: ${type} ${binOpr}= ${this.exp.parse(exp)};`;
+    return `${name} ${binOpr}= ${this.exp.parse(exp)};`;
   }
 
   private parseFuncCall({ name, params }: FuncCall) {
