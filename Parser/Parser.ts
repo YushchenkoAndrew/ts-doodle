@@ -1,9 +1,11 @@
+import * as dotenv from "dotenv";
 import ErrorHandler from "../Error/Error";
 import Statement from "./Statement/Statement";
 import { Token } from "../Lexer/Lexing";
 import { Operation, Declaration, SyntaxTree } from "./Interfaces";
 import { Assign, Condition, ForLoop, Return } from "./Statement/Interfaces";
 import { getDefinedToken } from "../lib";
+dotenv.config();
 
 class Parser {
   tokens: Token[][];
@@ -41,8 +43,10 @@ class Parser {
 
     this.syntaxTree = { type: "Program", body: this.currLevel.body };
 
-    console.log();
-    console.dir(this.syntaxTree, { depth: null });
+    if (process.env.DEBUG) {
+      console.log();
+      console.dir(this.syntaxTree, { depth: null });
+    }
 
     return this.syntaxTree;
   }
@@ -51,7 +55,7 @@ class Parser {
     let { type } = this.tokens[this.line][this.index] || { type: this.tokens[this.line + 1] ? "NEXT" : "EOF" };
     switch (type.split(/\ /)[0]) {
       case "Function": {
-        console.log(`FUNCTION: LEVEL ${level}`, this.tokens[this.line][this.index]);
+        if (process.env.DEBUG) console.log(`FUNCTION: LEVEL ${level}`, this.tokens[this.line][this.index]);
 
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
@@ -87,7 +91,7 @@ class Parser {
       // Make them visible some how
       case "ELSE-IF":
       case "IF": {
-        console.log(`IF:       LEVEL ${level}`, this.tokens[this.line][this.index]);
+        if (process.env.DEBUG) console.log(`IF:       LEVEL ${level}`, this.tokens[this.line][this.index]);
 
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
@@ -124,13 +128,13 @@ class Parser {
       }
 
       case "ELSE":
-        console.log(`ELSE:     LEVEL ${level}`, this.tokens[this.line][this.index]);
+        if (process.env.DEBUG) console.log(`ELSE:     LEVEL ${level}`, this.tokens[this.line][this.index]);
         this.checkLevel(level, forcedBlock);
         return level;
 
       case "FOR":
       case "WHILE":
-        console.log(`${type.includes("WHILE") ? "WHILE:" : "FOR:  "}    LEVEL ${level}`, this.tokens[this.line][this.index]);
+        if (process.env.DEBUG) console.log(`${type.includes("WHILE") ? "WHILE:" : "FOR:  "}    LEVEL ${level}`, this.tokens[this.line][this.index]);
 
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
@@ -160,7 +164,7 @@ class Parser {
 
       case "Continue":
       case "Break":
-        console.log(`BREAK:    LEVEL ${level}`, this.tokens[this.line][this.index]);
+        if (process.env.DEBUG) console.log(`BREAK:    LEVEL ${level}`, this.tokens[this.line][this.index]);
 
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
@@ -179,7 +183,7 @@ class Parser {
 
       case "Pass":
       case "Return":
-        console.log(`RETURN:   LEVEL ${level}`, this.tokens[this.line][this.index]);
+        if (process.env.DEBUG) console.log(`RETURN:   LEVEL ${level}`, this.tokens[this.line][this.index]);
 
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
@@ -195,14 +199,14 @@ class Parser {
         break;
 
       case "Variable":
-        console.log(`VARIABLE: LEVEL ${level}`, this.tokens[this.line][this.index]);
+        if (process.env.DEBUG) console.log(`VARIABLE: LEVEL ${level}`, this.tokens[this.line][this.index]);
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
         this.currLevel.body.push({ Statement: this.statement.parseVariable(this) } as Operation);
         break;
 
       case "Block":
-        console.log(`BLOCK: \t  LEVEL ${level}`);
+        if (process.env.DEBUG) console.log(`BLOCK: \t  LEVEL ${level}`);
         this.index++;
         return this.initStateMachine(level + 1, forcedBlock);
 
@@ -228,7 +232,7 @@ class Parser {
     }
 
     if (this.currLevel.level - level != 0) {
-      console.log(`CHANGE LEVEL FROM ${this.currLevel.level} TO ${level}`);
+      if (process.env.DEBUG) console.log(`CHANGE LEVEL FROM ${this.currLevel.level} TO ${level}`);
       // this.currLevel.level = level;
       return false;
     }

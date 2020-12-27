@@ -1,5 +1,7 @@
+import * as dotenv from "dotenv";
 import { readFileSync } from "fs";
 import lexemes from "./TokenTypes.json";
+dotenv.config();
 
 export interface Token {
   value: string;
@@ -74,7 +76,7 @@ class Lexing {
       if (currLine[0]) this.tokens.push(currLine);
     }
 
-    console.log(this.tokens);
+    if (process.env.DEBUG) console.log(this.tokens);
     return this.tokens;
 
     //

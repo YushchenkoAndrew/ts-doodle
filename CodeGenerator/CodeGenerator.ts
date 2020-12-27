@@ -1,8 +1,10 @@
+import * as dotenv from "dotenv";
 import { writeFileSync } from "fs";
 import { SyntaxTree, Operation, OperationTypes, Declaration } from "../Parser/Interfaces";
 import { List, Types } from "../Parser/Expression/Interfaces";
 import Statement from "./Statement/Statement";
 import Expression from "./Expression/Expression";
+dotenv.config();
 
 class Generator {
   keys = ["Declaration", "Statement", "Expression"];
@@ -42,7 +44,7 @@ class Generator {
   parse(name: string, tree: OperationTypes | Types): string {
     switch (name) {
       case "Declaration":
-        console.log(`Declaration : ${this.getTabLevel()}[${tree.type}]`);
+        if (process.env.DEBUG) console.log(`Declaration : ${this.getTabLevel()}[${tree.type}]`);
 
         // Add input params if demands of
         return (

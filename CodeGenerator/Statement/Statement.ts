@@ -1,3 +1,4 @@
+import * as dotenv from "dotenv";
 import Expression from "../Expression/Expression";
 import { OperationTypes } from "../../Parser/Interfaces";
 import { Assign, Condition, ForLoop, FuncCall, Return } from "../../Parser/Statement/Interfaces";
@@ -5,6 +6,7 @@ import { Types } from "../../Parser/Expression/Interfaces";
 import Generator from "../CodeGenerator";
 import library from "../LibraryFunc";
 import { isInclude } from "../../lib/index";
+dotenv.config();
 
 class Statement {
   exp: Expression;
@@ -15,7 +17,7 @@ class Statement {
 
   parse(ptr: Generator, tree: OperationTypes): string {
     let { type } = tree;
-    console.log(`Statement   : ${ptr.getTabLevel()}[${type}]`);
+    if (process.env.DEBUG) console.log(`Statement   : ${ptr.getTabLevel()}[${type}]`);
 
     switch (type) {
       case "VAR":
