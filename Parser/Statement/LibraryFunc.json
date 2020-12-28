@@ -1,11 +1,41 @@
 {
+  "chr": {
+    "type": "LIBRARY",
+    "name": "chr",
+    "params": [
+      {
+        "type": "VAR",
+        "name": "i",
+        "defined": { "value": "", "type": "INT", "kind": 10 }
+      }
+    ],
+    "range": { "min": "1", "max": "1" },
+    "body": [],
+    "defined": { "value": "", "type": "STR", "length": -1 }
+  },
+
+  "float": {
+    "type": "LIBRARY",
+    "name": "float",
+    "params": [
+      {
+        "type": "VAR",
+        "name": "x",
+        "defined": { "value": "", "type": "ANY" }
+      }
+    ],
+    "range": { "min": "1", "max": "1" },
+    "body": [],
+    "defined": { "value": "", "type": "FLOAT" }
+  },
+
   "int": {
     "type": "LIBRARY",
     "name": "int",
     "params": [
       {
         "type": "VAR",
-        "name": "",
+        "name": "x",
         "defined": { "value": "", "type": "STR", "length": -1 }
       },
       {
@@ -20,27 +50,32 @@
     "defined": { "value": "", "type": "INT", "kind": 10 }
   },
 
+  "len": {
+    "type": "LIBRARY",
+    "name": "len",
+    "params": [
+      {
+        "type": "VAR",
+        "name": "s",
+        "defined": { "value": "", "type": "LIST", "length": -1, "defined": { "value": "", "type": "ANY" } }
+      }
+    ],
+    "range": { "min": "1", "max": "1" },
+    "body": [],
+    "defined": { "value": "", "type": "INT", "kind": 10 }
+  },
+
   "print": {
     "type": "LIBRARY",
     "name": "print",
     "params": [
       {
         "type": "VAR",
-        "name": "",
+        "name": "objects",
         "defined": { "value": "", "type": "ANY" }
-      },
-      {
-        "type": "VAR",
-        "name": "sep",
-        "defined": { "value": " ", "type": "string", "length": 1 }
-      },
-      {
-        "type": "VAR",
-        "name": "end",
-        "defined": { "value": "\n", "type": "string", "length": 1 }
       }
     ],
-    "range": { "min": "1", "max": "Infinity" },
+    "range": { "min": "0", "max": "Infinity" },
     "body": [],
     "defined": { "value": "", "type": "NULL" }
   },
@@ -77,7 +112,7 @@
     "params": [
       {
         "type": "VAR",
-        "name": "",
+        "name": "object",
         "defined": { "value": "", "type": "ANY" }
       },
       {
