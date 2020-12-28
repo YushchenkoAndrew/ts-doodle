@@ -4,7 +4,7 @@ import Expression from "../Expression/Expression";
 import { Declaration, Operation, Range } from "../Interfaces";
 import { Assign, Condition, ForLoop, FuncCall, Return } from "./Interfaces";
 import { copyTree, getDefinedToken, isInclude } from "../../lib/";
-import { AST, Int, List, Types } from "../Expression/Interfaces";
+import { AST, Float, Int, List, Types } from "../Expression/Interfaces";
 import library from "./LibraryFunc.json";
 import { isEqual } from "../../lib/index";
 
@@ -17,7 +17,6 @@ class Statement {
     this.exp = new Expression(this.err);
   }
 
-  // TODO: Improve this to be able to handle such syntax as => "def func(a, b = 2):"
   getParams(ptr: Parser, ...allowed: string[]): Assign[] {
     let params: Assign[] = [];
     let assignParams = false;
@@ -29,7 +28,7 @@ class Statement {
       // Check if the arg(param) has a default value
       if (!isEqual(ptr.tokens[ptr.line][ptr.index].type, "Assignment Operator")) {
         if (assignParams) this.err.message({ name: "SyntaxError", message: "Such params Sequence not allowed. Wrong assign param position", ptr });
-        params.push({ type: "VAR", name: value, init: true, binOpr: "", defined: { value: "", type: "ANY" } } as Assign);
+        params.push({ type: "VAR", name: value, init: false, binOpr: "", defined: { value: "", type: "ANY" } } as Assign);
       } else {
         assignParams = true;
         params.push(this.parseVariableAssign(ptr));
@@ -50,10 +49,8 @@ class Statement {
 
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Open Parentheses are missing", ptr }, "Open Parentheses");
 
-    // Create type "ANY" which is mean that variable is undefined
-    // TODO: Think about it, do I need to create arguments (params) as Statements ?
-    // Complete Expression part
-    // let params = this.getParams(ptr, "Variable").map((param) => ({ type: "VAR", name: param, defined: { value: "", type: "ANY" } } as Assign));
+    // Receive params as Assign[] that mean that some of them can be link to
+    // default Expression
     let params = this.getParams(ptr, "Variable");
     let range = { min: params.reduce((acc, curr) => acc + Number(!curr.Expression), 0), max: params.length };
 
@@ -232,16 +229,10 @@ class Statement {
     return { type: "VAR", name: value, init, binOpr, Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
   }
 
-  //
-  // TODO: TO rebuild type of function's body depends on input value, if it's allowed
-  //          For this You need to add another variable which will link to the final
-  //          Object
-  //
   private getArgs(ptr: Parser, params: Assign[], range: Range): (Assign | Types)[] {
     let args: (Assign | Types)[] = [];
     let index = -1;
 
-    // TODO: Change ast copy from JSON to copyTree ...
     let prevState = {
       type: JSON.parse(JSON.stringify(this.exp.type)),
       // ast: JSON.parse(JSON.stringify(this.exp.ast)),
@@ -256,40 +247,47 @@ class Statement {
       "Open Parentheses"
     );
 
-    // TODO: Fix a bug with range(min, max), I guess the problem
-    // in the variable "i" it shouldn't contain min value
+    // Check if the next token is "Close Parentheses" and function is allowed to not have
+    // any args/params, if so then skip while loop, if something is strange then check
+    // while loop where all syntax errors should appear
+    if (!ptr.tokens[ptr.line][ptr.index].type.includes("Close Parentheses") || Number(range.min)) {
+      // Create a while loop that need to goes trough all params
+      // Now it's possible to compile such syntax "...[1, 2, 3]"
+      // Because range.max can contain Infinity
+      while (++index < Number(range.max)) {
+        // TODO: To come up with solution about how to iterate "i"
+        //  when ya setting each param individually
+        // Plus add ability to assign variables/params => (Assign Type)
 
-    // Create a while loop that need to goes trough all params
-    // Now it's possible to compile such syntax "...[1, 2, 3]"
-    // Because range.max can contain Infinity
-    while (++index < Number(range.max)) {
-      let i = index < Number(range.min) ? index : Number(range.min) - 1;
-      let type = params[i].defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "BOOL", "LIST", "ANY"] : [params[i].defined.type];
+        let i = index < params.length ? index : params.length - 1;
+        let types = params[i].defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "BOOL", "LIST", "ANY"] : [params[i].defined.type];
 
-      let argv = this.exp.parse(ptr);
-      let curr = this.exp.type.curr.type == "INT" && type[0] == "FLOAT" ? { value: "", type: "FLOAT" } : this.exp.type.curr;
-      curr = this.exp.type.curr.type === "FLOAT" && type[0] == "INT" ? ({ value: "", type: "INT", kind: 10 } as Int) : curr;
+        let argv = this.exp.parse(ptr);
+        let curr = this.transformType(this.exp.type.curr, types);
+        // let curr = typeName == "INT" && isInclude("FLOAT", ...type) ? { value: "", type: "FLOAT" } : this.exp.type.curr;
+        // curr = typeName == "FLOAT" && isInclude("INT", ...type) ? ({ value: "", type: "INT", kind: 10 } as Int) : curr;
 
-      this.err.checkObj(
-        "type",
-        curr,
-        { name: "SyntaxError", message: `Wrong arguments declaration, type should be "${params[i].defined.type}" but "${curr.type}" was given`, ptr },
-        ...type
-      );
-      // TODO: Somehow update the final body
-      // if (param.defined.type == "ANY") param.defined = this.type.curr;
+        this.err.checkObj(
+          "type",
+          curr,
+          { name: "SyntaxError", message: `Wrong arguments declaration, type should be "${params[i].defined.type}" but "${curr.type}" was given`, ptr },
+          ...types
+        );
+        // TODO: Somehow update the final body
+        // if (param.defined.type == "ANY") param.defined = this.type.curr;
 
-      args.push(argv);
+        args.push(argv);
 
-      // Check next step if it Close Parentheses then exit from the loop
-      // Else check if the next token is comma
-      if (ptr.tokens[ptr.line][ptr.index]?.type == "Close Parentheses" && index >= Number(range.min) - 1) break;
-      this.err.checkObj(
-        "type",
-        ptr.tokens[ptr.line][ptr.index++],
-        { name: "SyntaxError", message: `Func missing ${params.length - i - 1} params`, ptr },
-        "Comma"
-      );
+        // Check next step if it Close Parentheses then exit from the loop
+        // Else check if the next token is comma
+        if (ptr.tokens[ptr.line][ptr.index]?.type == "Close Parentheses" && index >= Number(range.min) - 1) break;
+        this.err.checkObj(
+          "type",
+          ptr.tokens[ptr.line][ptr.index++],
+          { name: "SyntaxError", message: `Func missing ${params.length - i - 1} params`, ptr },
+          "Comma"
+        );
+      }
     }
 
     // Check on Closing Parentheses and restore previous State
@@ -300,6 +298,32 @@ class Statement {
     this.exp.parentheses = prevState.parentheses;
 
     return args;
+  }
+
+  // TODO: At some point come up with much greater solution
+  private transformType(curr: Types, allowed: string[]): Types {
+    let transformed = { ...curr };
+
+    switch (curr.type) {
+      case "INT":
+        if (isInclude("FLOAT", ...allowed)) transformed = { value: "", type: "FLOAT" } as Float;
+        break;
+
+      case "FLOAT":
+        if (isInclude("INT", ...allowed)) transformed = { value: "", type: "INT", kind: 10 } as Int;
+        break;
+
+      case "BOOL":
+        if (isInclude("INT", ...allowed)) transformed = { value: "", type: "INT", kind: 10 } as Int;
+        else if (isInclude("FLOAT", ...allowed)) transformed = { value: "", type: "FLOAT" } as Float;
+        break;
+
+      case "ANY":
+        transformed = { value: "", type: allowed[0] } as Types;
+        break;
+    }
+
+    return transformed;
   }
 
   parseFuncCaller(ptr: Parser): FuncCall {
