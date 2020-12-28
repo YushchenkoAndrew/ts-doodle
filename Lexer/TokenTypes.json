@@ -64,6 +64,9 @@
   "[": "Open SquareBrackets",
   "]": "Close SquareBrackets",
 
+  "True": "Boolean",
+  "False": "Boolean",
+
   "'": "Quote Mark",
   "\"": "Quote Mark"
 }
