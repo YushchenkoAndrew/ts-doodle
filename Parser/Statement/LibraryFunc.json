@@ -1,4 +1,25 @@
 {
+  "int": {
+    "type": "LIBRARY",
+    "name": "int",
+    "params": [
+      {
+        "type": "VAR",
+        "name": "",
+        "defined": { "value": "", "type": "STR", "length": -1 }
+      },
+      {
+        "type": "VAR",
+        "name": "base",
+        "Expression": { "value": "10", "type": "INT", "kind": 10 },
+        "defined": { "value": "", "type": "ANY" }
+      }
+    ],
+    "range": { "min": "1", "max": "2" },
+    "body": [],
+    "defined": { "value": "", "type": "INT", "kind": 10 }
+  },
+
   "print": {
     "type": "LIBRARY",
     "name": "print",
@@ -48,5 +69,26 @@
     "range": { "min": "1", "max": "3" },
     "body": [],
     "defined": { "value": "", "type": "LIST", "length": -1, "defined": { "type": "INT", "kind": 10 } }
+  },
+
+  "str": {
+    "type": "LIBRARY",
+    "name": "str",
+    "params": [
+      {
+        "type": "VAR",
+        "name": "",
+        "defined": { "value": "", "type": "ANY" }
+      },
+      {
+        "type": "VAR",
+        "name": "encoding",
+        "Expression": { "value": "utf-8", "type": "STR", "length": 5 },
+        "defined": { "value": "", "type": "ANY" }
+      }
+    ],
+    "range": { "min": "1", "max": "2" },
+    "body": [],
+    "defined": { "value": "", "type": "STR", "length": -1 }
   }
 }

@@ -256,12 +256,15 @@ class Statement {
       "Open Parentheses"
     );
 
+    // TODO: Fix a bug with range(min, max), I guess the problem
+    // in the variable "i" it shouldn't contain min value
+
     // Create a while loop that need to goes trough all params
     // Now it's possible to compile such syntax "...[1, 2, 3]"
     // Because range.max can contain Infinity
     while (++index < Number(range.max)) {
       let i = index < Number(range.min) ? index : Number(range.min) - 1;
-      let type = params[i].defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "LIST", "ANY"] : [params[i].defined.type];
+      let type = params[i].defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "BOOL", "LIST", "ANY"] : [params[i].defined.type];
 
       let argv = this.exp.parse(ptr);
       let curr = this.exp.type.curr.type == "INT" && type[0] == "FLOAT" ? { value: "", type: "FLOAT" } : this.exp.type.curr;
