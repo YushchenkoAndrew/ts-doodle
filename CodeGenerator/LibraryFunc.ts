@@ -1,5 +1,11 @@
 export default {
-  int: (args: string[]) => `parseInt(${args[0]}${args[1] ? `, ${args[1]}` : ""})`,
+  chr: (arg: string[]) => `String.fromCharCode(${arg[0]})`,
+
+  float: (arg: string[]) => `Number(${arg[0]})`,
+
+  int: (args: string[]) => `parseInt(${args[0]}${args[1] ? ", " + args[1] : ""})`,
+
+  len: (args: string[]) => `${args[0]}.length`,
 
   print: (args: string[]) => `console.log(${args.join(", ")})`,
 
