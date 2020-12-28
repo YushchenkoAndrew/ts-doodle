@@ -3,6 +3,7 @@ import { Types } from "./Expression/Interfaces";
 
 // Basics Interfaces for Parser
 export interface Declaration {
+  style: string;
   type: string;
   name: string;
   params: Assign[];

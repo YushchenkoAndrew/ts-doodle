@@ -56,7 +56,7 @@ class Statement {
 
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Indented Block is missing", ptr }, "Start Block");
-    return { type: "FUNC", name: value, params: params, range, body: [], defined: { value: "", type: "ANY" } };
+    return { style: "FUNC", type: "FUNC", name: value, params: params, range, body: [], defined: { value: "", type: "ANY" } };
   }
 
   parseIf(ptr: Parser): Condition {

@@ -4,6 +4,7 @@ import { SyntaxTree, Operation, OperationTypes, Declaration } from "../Parser/In
 import { List, Types } from "../Parser/Expression/Interfaces";
 import Statement from "./Statement/Statement";
 import Expression from "./Expression/Expression";
+import { Return } from "../Parser/Statement/Interfaces";
 dotenv.config();
 
 class Generator {
@@ -59,8 +60,13 @@ class Generator {
     return "";
   }
 
-  private parseFuncDeclaration({ name, params, body, defined }: Declaration) {
+  private parseFuncDeclaration({ style, name, params, body, defined }: Declaration) {
     let args = params.map((arg) => `${arg.name}: ${this.getType(arg.defined)}${arg.Expression ? ` = ${this.statement.exp.parse(arg.Expression)}` : ""}`);
+
+    if (style == "ARROW") {
+      let { Expression: exp = {} as Types } = body[0].Statement as Return;
+      return `let ${name} = (${args.join(", ")}): ${this.getType(defined)} => ` + this.statement.exp.parse(exp);
+    }
 
     return `function ${name}(${args.join(", ")}): ${this.getType(defined)} {\n` + this.parseBody(body) + `\n${this.getTabLevel()}}\n`;
   }
