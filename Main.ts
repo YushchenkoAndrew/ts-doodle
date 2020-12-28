@@ -2,6 +2,7 @@ import * as dotenv from "dotenv";
 import Lexing from "./Lexer/Lexing";
 import Parser from "./Parser/Parser";
 import Generator from "./CodeGenerator/CodeGenerator";
+import Semantic from "./Semantic/Semantic";
 dotenv.config();
 
 function main() {
@@ -10,6 +11,8 @@ function main() {
 
   let parser = new Parser(lexing.getTokens());
   parser.start();
+
+  let semantic = new Semantic(parser.getTree());
 
   let generator = new Generator(parser.getTree());
   generator.save(process.env.FILE_OUT);
