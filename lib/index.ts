@@ -1,3 +1,4 @@
+import { AST, Types } from "../Parser/Expression/Interfaces";
 import { Operation, OperationTypes } from "../Parser/Interfaces";
 export function isInclude(type: string, ...arr: string[]) {
   for (let i of arr) if (type.includes(i)) return true;
@@ -46,4 +47,13 @@ export function getDefinedTokenArray(types: string[], key: string, value: string
   if (index == -1 && errFunc) errFunc();
 
   return index != -1 ? defined[index][prevType] : null;
+}
+
+export function copyTree(branch: AST | Types): AST | Types {
+  let obj = {} as AST;
+  for (let key in branch) {
+    obj[key] = isInclude(key, "left", "right", "exp") ? copyTree(branch[key]) : branch[key];
+  }
+
+  return obj;
 }
