@@ -43,8 +43,8 @@ class Expression {
     let { type } = ptr.tokens[ptr.line][ptr.index] || { type: "LINE_END" };
 
     switch (type.split(/\ /g)[1] || type) {
+      case "Boolean":
       case "String":
-      case "Char":
       case "Number":
         let constant = this.parseConstExpression(ptr);
         this.type = defineType(this.type, { ...constant }, this.ast);
@@ -67,8 +67,7 @@ class Expression {
         // Change value of this.neg to unary because after a number can be only
         // a binary operation
         this.neg = "Binary";
-        // TODO: + FIXME: Big with recalling variable
-        // let varType = this.checkOnBasicFunc(value) || this.getDefinedToken(["Statement", "Declaration"], "name", `_${value}`, this.currLevel);
+
         let varDeclaration =
           (library[value] as OperationTypes) ??
           getDefinedToken(["Statement", "Declaration"], "name", value, ptr.currLevel, () =>
@@ -128,6 +127,10 @@ class Expression {
         if (priority === null) this.ast = { type: "Binary Operation", value: operator, left: params, right: undefined, priority: currPriority };
 
         let right = this.parseExpression(ptr, { priority: currPriority });
+
+        // TODO: Work on Boolean Type
+        // TODO: Transform the result of the binaryOperation Output
+        // For example => (not "str" => { type: "INT" }), ("1" or 1 => { type: "ANY" } )
         this.err.checkObj(
           "type",
           this.type.curr,
@@ -333,6 +336,9 @@ class Expression {
 
       case "String":
         return { value: value, type: "STR", length: value.length };
+
+      case "Boolean":
+        return { value: value.toLowerCase(), type: "BOOL" };
     }
 
     this.err.message({ name: "TypeError", message: `Invalid Type "${type}"`, ptr });
