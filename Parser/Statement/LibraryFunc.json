@@ -4,17 +4,17 @@
     "name": "print",
     "params": [
       {
-        "type": "NULL",
+        "type": "VAR",
         "name": "",
         "defined": { "value": "", "type": "ANY" }
       },
       {
-        "type": "NULL",
+        "type": "VAR",
         "name": "sep",
         "defined": { "value": " ", "type": "string", "length": 1 }
       },
       {
-        "type": "NULL",
+        "type": "VAR",
         "name": "end",
         "defined": { "value": "\n", "type": "string", "length": 1 }
       }
@@ -29,17 +29,17 @@
     "name": "range",
     "params": [
       {
-        "type": "NULL",
+        "type": "VAR",
         "name": "start",
         "defined": { "value": "", "type": "INT", "kind": 10 }
       },
       {
-        "type": "NULL",
+        "type": "VAR",
         "name": "stop",
         "defined": { "value": "", "type": "INT", "kind": 10 }
       },
       {
-        "type": "NULL",
+        "type": "VAR",
         "name": "step",
         "Expression": { "value": "1", "type": "INT", "kind": 10 },
         "defined": { "value": "", "type": "INT", "kind": 10 }

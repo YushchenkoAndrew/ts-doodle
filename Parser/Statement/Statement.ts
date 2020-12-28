@@ -3,9 +3,10 @@ import Parser from "../Parser";
 import Expression from "../Expression/Expression";
 import { Declaration, Operation, Range } from "../Interfaces";
 import { Assign, Condition, ForLoop, FuncCall, Return } from "./Interfaces";
-import { getDefinedToken, isInclude } from "../../lib/";
-import { List, Types } from "../Expression/Interfaces";
+import { copyTree, getDefinedToken, isInclude } from "../../lib/";
+import { AST, Int, List, Types } from "../Expression/Interfaces";
 import library from "./LibraryFunc.json";
+import { isEqual } from "../../lib/index";
 
 class Statement {
   err: ErrorHandler;
@@ -17,16 +18,27 @@ class Statement {
   }
 
   // TODO: Improve this to be able to handle such syntax as => "def func(a, b = 2):"
-  getParams(ptr: Parser, ...allowed: string[]): string[] {
-    let params: string[] = [];
+  getParams(ptr: Parser, ...allowed: string[]): Assign[] {
+    let params: Assign[] = [];
+    let assignParams = false;
 
     while (ptr.tokens[ptr.line][ptr.index] && !ptr.tokens[ptr.line][ptr.index].type.includes("Close")) {
       let { value } = ptr.tokens[ptr.line][ptr.index];
       this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, ...allowed);
-      params.push(value);
+
+      // Check if the arg(param) has a default value
+      if (!isEqual(ptr.tokens[ptr.line][ptr.index].type, "Assignment Operator")) {
+        if (assignParams) this.err.message({ name: "SyntaxError", message: "Such params Sequence not allowed. Wrong assign param position", ptr });
+        params.push({ type: "VAR", name: value, init: true, binOpr: "", defined: { value: "", type: "ANY" } } as Assign);
+      } else {
+        assignParams = true;
+        params.push(this.parseVariableAssign(ptr));
+      }
+
       this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, "Close", "Comma");
       ptr.index += Number(ptr.tokens[ptr.line][ptr.index].type.includes("Comma"));
     }
+
     return params;
   }
 
@@ -41,8 +53,9 @@ class Statement {
     // Create type "ANY" which is mean that variable is undefined
     // TODO: Think about it, do I need to create arguments (params) as Statements ?
     // Complete Expression part
-    let params = this.getParams(ptr, "Variable").map((param) => ({ type: "VAR", name: param, defined: { value: "", type: "ANY" } } as Assign));
-    let range = { min: params.length, max: params.length };
+    // let params = this.getParams(ptr, "Variable").map((param) => ({ type: "VAR", name: param, defined: { value: "", type: "ANY" } } as Assign));
+    let params = this.getParams(ptr, "Variable");
+    let range = { min: params.reduce((acc, curr) => acc + Number(!curr.Expression), 0), max: params.length };
 
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Indented Block is missing", ptr }, "Start Block");
@@ -231,7 +244,8 @@ class Statement {
     // TODO: Change ast copy from JSON to copyTree ...
     let prevState = {
       type: JSON.parse(JSON.stringify(this.exp.type)),
-      ast: JSON.parse(JSON.stringify(this.exp.ast)),
+      // ast: JSON.parse(JSON.stringify(this.exp.ast)),
+      ast: copyTree(this.exp.ast),
       parentheses: this.exp.parentheses,
     };
 
@@ -244,14 +258,21 @@ class Statement {
 
     // Create a while loop that need to goes trough all params
     // Now it's possible to compile such syntax "...[1, 2, 3]"
-    // Because range.max can contain an Infinity value
+    // Because range.max can contain Infinity
     while (++index < Number(range.max)) {
       let i = index < Number(range.min) ? index : Number(range.min) - 1;
       let type = params[i].defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "LIST", "ANY"] : [params[i].defined.type];
 
       let argv = this.exp.parse(ptr);
       let curr = this.exp.type.curr.type == "INT" && type[0] == "FLOAT" ? { value: "", type: "FLOAT" } : this.exp.type.curr;
-      this.err.checkObj("type", curr, { name: "SyntaxError", message: "Wrong arguments declaration", ptr }, ...type);
+      curr = this.exp.type.curr.type === "FLOAT" && type[0] == "INT" ? ({ value: "", type: "INT", kind: 10 } as Int) : curr;
+
+      this.err.checkObj(
+        "type",
+        curr,
+        { name: "SyntaxError", message: `Wrong arguments declaration, type should be "${params[i].defined.type}" but "${curr.type}" was given`, ptr },
+        ...type
+      );
       // TODO: Somehow update the final body
       // if (param.defined.type == "ANY") param.defined = this.type.curr;
 
@@ -272,7 +293,7 @@ class Statement {
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
 
     this.exp.type = prevState.type;
-    this.exp.ast = prevState.ast;
+    this.exp.ast = prevState.ast as AST;
     this.exp.parentheses = prevState.parentheses;
 
     return args;

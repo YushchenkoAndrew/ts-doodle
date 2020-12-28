@@ -47,13 +47,7 @@ class Generator {
         if (process.env.DEBUG) console.log(`Declaration : ${this.getTabLevel()}[${tree.type}]`);
 
         // Add input params if demands of
-        return (
-          `function ${(tree as Declaration).name}(${(tree as Declaration).params
-            .map((arg) => `${arg.name}: ${this.getType(arg.defined)}`)
-            .join(", ")}): ${this.getType((tree as Declaration).defined)} {\n` +
-          this.parseBody((tree as Declaration).body) +
-          `\n${this.getTabLevel()}}\n`
-        );
+        return this.parseFuncDeclaration(tree as Declaration);
 
       case "Statement":
         return this.statement.parse(this, tree);
@@ -63,6 +57,12 @@ class Generator {
     }
 
     return "";
+  }
+
+  private parseFuncDeclaration({ name, params, body, defined }: Declaration) {
+    let args = params.map((arg) => `${arg.name}: ${this.getType(arg.defined)}${arg.Expression ? ` = ${this.statement.exp.parse(arg.Expression)}` : ""}`);
+
+    return `function ${name}(${args.join(", ")}): ${this.getType(defined)} {\n` + this.parseBody(body) + `\n${this.getTabLevel()}}\n`;
   }
 
   getType(defined: Types): string {
