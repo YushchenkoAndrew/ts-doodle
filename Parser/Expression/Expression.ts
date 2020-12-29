@@ -82,9 +82,19 @@ class Expression {
         let defined = (varDeclaration as Assign).defined;
         let { type: nextToken } = ptr.tokens[ptr.line][ptr.index] ?? { type: "" };
 
-        // Check if after all the next operation is not a Variable but a result of
-        // Function Caller then change varType to "FuncCall" and change defined Value
-        if (isInclude((varDeclaration as Var).defined.type ?? " ", "FUNC", "LIBRARY") && isInclude(nextToken, "Open Parentheses")) {
+        // Check if after all, next token is Parentheses that mean that next should be
+        // a Function Caller
+        if (isInclude(nextToken, "Open Parentheses")) {
+          // Check if Type is correct one
+          this.err.checkObj(
+            "type",
+            (varDeclaration as Var).defined,
+            { name: "TypeError", message: `Type ${defined.type} is not callable`, ptr },
+            "FUNC",
+            "LIBRARY"
+          );
+
+          // Then change varType to "FuncCall" and change defined Value
           varType = ptr.statement.parseFuncCaller(ptr);
           defined = (varType.defined as Var).defined;
         }
