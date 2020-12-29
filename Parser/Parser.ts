@@ -226,7 +226,8 @@ class Parser {
       case "Float":
       case "String":
       case "Boolean":
-        if (process.env.DEBUG) console.log(`EXP: LEVEL ${level}`, this.tokens[this.line][this.index]);
+      case "Exp":
+        if (process.env.DEBUG) console.log(`EXP:      LEVEL ${level}`, this.tokens[this.line][this.index]);
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.statement.deleteSpaceInLine(this);
         this.currLevel.body.push({ Expression: this.statement.exp.parse(this) } as Operation);

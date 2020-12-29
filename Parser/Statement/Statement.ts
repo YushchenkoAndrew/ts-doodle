@@ -21,11 +21,11 @@ class Statement {
     ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
   }
 
-  getParams(ptr: Parser, ...allowed: string[]): Assign[] {
+  getParams(ptr: Parser, end: string = "Close", ...allowed: string[]): Assign[] {
     let params: Assign[] = [];
     let assignParams = false;
 
-    while (ptr.tokens[ptr.line][ptr.index] && !ptr.tokens[ptr.line][ptr.index].type.includes("Close")) {
+    while (ptr.tokens[ptr.line][ptr.index] && !ptr.tokens[ptr.line][ptr.index].type.includes(end)) {
       let { value } = ptr.tokens[ptr.line][ptr.index];
       this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, ...allowed);
 
@@ -38,7 +38,7 @@ class Statement {
         params.push(this.parseVariableAssign(ptr));
       }
 
-      this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, "Close", "Comma");
+      this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, end, "Comma");
       ptr.index += Number(ptr.tokens[ptr.line][ptr.index].type.includes("Comma"));
     }
 
@@ -54,12 +54,12 @@ class Statement {
 
     // Receive params as Assign[] that mean that some of them can be link to
     // default Expression
-    let params = this.getParams(ptr, "Variable");
+    let params = this.getParams(ptr, "Close Parentheses", "Variable");
     let range = { min: params.reduce((acc, curr) => acc + Number(!curr.Expression), 0), max: params.length };
 
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Indented Block is missing", ptr }, "Start Block");
-    return { type: "FUNC", name: value, params: params, range, body: [], defined: { value: "", type: "ANY" } };
+    return { type: "FUNC", name: value, params, range, body: [], defined: { value: "", type: "ANY" } };
   }
 
   parseIf(ptr: Parser): Condition {
@@ -218,7 +218,8 @@ class Statement {
       "String",
       "Unary",
       "Parentheses",
-      "SquareBrackets"
+      "SquareBrackets",
+      "Function"
     );
 
     // let range = getDefinedToken("Statement", "name", ptr.tokens[ptr.line][ptr.index++].value, ptr.currLevel, () =>

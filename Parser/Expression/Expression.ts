@@ -39,7 +39,10 @@ class Expression {
    * @param params   --   Previous param
    * @param priority --   priority is important
    */
-  private parseExpression(ptr: Parser, { params = {} as Types, priority = null }: { params?: Types | AST; priority?: number | null }): Types | AST {
+  private parseExpression(
+    ptr: Parser,
+    { params = {} as Types, priority = null }: { params?: Types | AST; priority?: number | null }
+  ): Types | AST | Declaration {
     let { type } = ptr.tokens[ptr.line][ptr.index] || { type: "LINE_END" };
 
     switch (type.split(/\ /g)[1] || type) {
@@ -254,6 +257,25 @@ class Expression {
         this.ast = prevState.AST;
 
         return { type: "LIST", value: items, length: items.length, defined: { ...this.type.curr } } as List;
+      }
+
+      // TODO: Add type "FUNC"
+      case "Function": {
+        ptr.index++;
+        let args = ptr.statement.getParams(ptr, "Start Block", "Variable");
+        let range = { min: args.reduce((acc, curr) => acc + Number(!curr.Expression), 0), max: args.length };
+
+        this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Start Block is missing", ptr }, "Start Block");
+
+        // Create simple Expression Operation for Lambda/Arrow functions
+        return {
+          type: "FUNC",
+          name: "",
+          params: args,
+          range,
+          body: [{ Statement: { type: "RET", Expression: this.parse(ptr), defined: this.type.curr } }],
+          defined: this.type.curr,
+        } as Declaration;
       }
 
       case "LINE_END":
