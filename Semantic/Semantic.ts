@@ -1,6 +1,5 @@
 import { SyntaxTree, Operation } from "../Parser/Interfaces";
 import { Assign } from "../Parser/Statement/Interfaces";
-import Statement from "../Parser/Statement/Statement";
 
 class Semantic {
   syntaxTree: SyntaxTree;
