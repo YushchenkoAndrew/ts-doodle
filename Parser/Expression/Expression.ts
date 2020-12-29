@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 import priorityTable from "./PriorityTable.json";
 import allowedOperations from "./AllowedOperations.json";
 import Parser from "../Parser";
-import { Str, BinaryOperation, UnaryOperation, Types, AST, Var, List } from "./Interfaces";
+import { Str, BinaryOperation, UnaryOperation, Types, AST, Var, List, Func } from "./Interfaces";
 import ErrorHandler from "../../Error/Error";
 import { FuncCall, Assign } from "../Statement/Interfaces";
 import { getDefinedToken, copyTree } from "../../lib";
@@ -77,17 +77,22 @@ class Expression {
             this.err.message({ name: "NameError", message: `Such Name "${value}" is not defined`, ptr })
           );
 
-        // Create Expression that depends on type, if it FUNC then call parserFuncCaller
-        // TODO:
-        // varType = varType.type == "FUNC" ? this.parseFuncCaller() : { value: `_${value}`, type: "VAR", defined: varType.defined };
-        let varType = isInclude(varDeclaration?.type ?? " ", "FUNC", "LIBRARY")
-          ? ptr.statement.parseFuncCaller(ptr)
-          : ({ value, type: "VAR", defined: (varDeclaration as Assign).defined } as Var);
+        // Set as default value simple Assign template for Variable
+        let varType: Var | FuncCall = { value, type: "VAR", defined: (varDeclaration as Assign).defined };
+        let defined = (varDeclaration as Assign).defined;
+        let { type: nextToken } = ptr.tokens[ptr.line][ptr.index] ?? { type: "" };
+
+        // Check if after all the next operation is not a Variable but a result of
+        // Function Caller then change varType to "FuncCall" and change defined Value
+        if (isInclude((varDeclaration as Var).defined.type ?? " ", "FUNC", "LIBRARY") && isInclude(nextToken, "Open Parentheses")) {
+          varType = ptr.statement.parseFuncCaller(ptr);
+          defined = (varType.defined as Var).defined;
+        }
 
         // Check if current variable has any type if so then send itself, else
         // the AST, this need for such situation => (a + b), where a => "ANY",
         // b => "INT"
-        this.type = defineType(this.type, { ...varType.defined }, varType.defined.type == "ANY" ? varType : this.ast);
+        this.type = defineType(this.type, { ...defined }, varType.defined.type == "ANY" ? varType : this.ast);
 
         if (priority === null) return this.parseExpression(ptr, { params: varType });
         return varType;
@@ -272,9 +277,8 @@ class Expression {
           type: "FUNC",
           name: "",
           params: args,
-          range,
-          body: [{ Statement: { type: "RET", Expression: this.parse(ptr), defined: this.type.curr } }],
-          defined: this.type.curr,
+          body: [{ Expression: this.parse(ptr) }],
+          defined: { type: "FUNC", range, defined: this.type.curr } as Func,
         } as Declaration;
       }
 
