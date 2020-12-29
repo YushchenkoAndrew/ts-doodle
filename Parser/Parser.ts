@@ -80,7 +80,7 @@ class Parser {
 
         // Set the type of return value
         let define = getDefinedToken("Statement", "type", "RET", this.currLevel);
-        if (define) body.slice(-1)[0].Declaration.defined = (define as Return).defined;
+        if (define) body.slice(-1)[0].Declaration.defined.defined = (define as Return).defined;
 
         this.currLevel.level--;
         this.currLevel.header = header;

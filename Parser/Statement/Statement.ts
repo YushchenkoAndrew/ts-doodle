@@ -4,7 +4,7 @@ import Expression from "../Expression/Expression";
 import { Declaration, Operation, Range } from "../Interfaces";
 import { Assign, Condition, ForLoop, FuncCall, Return } from "./Interfaces";
 import { copyTree, getDefinedToken, isInclude } from "../../lib/";
-import { AST, Float, Int, List, Types } from "../Expression/Interfaces";
+import { AST, Float, Func, Int, List, Types } from "../Expression/Interfaces";
 import library from "./LibraryFunc.json";
 import { isEqual } from "../../lib/index";
 
@@ -27,18 +27,48 @@ class Statement {
 
     while (ptr.tokens[ptr.line][ptr.index] && !ptr.tokens[ptr.line][ptr.index].type.includes(end)) {
       let { value } = ptr.tokens[ptr.line][ptr.index];
-      this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, ...allowed);
+      this.err.checkObj(
+        "type",
+        ptr.tokens[ptr.line][ptr.index++],
+        {
+          name: "SyntaxError",
+          message: "Wrong Function declaration Syntax",
+          ptr,
+        },
+        ...allowed
+      );
 
       // Check if the arg(param) has a default value
       if (!isEqual(ptr.tokens[ptr.line][ptr.index].type, "Assignment Operator")) {
-        if (assignParams) this.err.message({ name: "SyntaxError", message: "Such params Sequence not allowed. Wrong assign param position", ptr });
-        params.push({ type: "VAR", name: value, init: false, binOpr: "", defined: { value: "", type: "ANY" } } as Assign);
+        if (assignParams)
+          this.err.message({
+            name: "SyntaxError",
+            message: "Such params Sequence not allowed. Wrong assign param position",
+            ptr,
+          });
+        params.push({
+          type: "VAR",
+          name: value,
+          init: false,
+          binOpr: "",
+          defined: { value: "", type: "ANY" },
+        } as Assign);
       } else {
         assignParams = true;
         params.push(this.parseVariableAssign(ptr));
       }
 
-      this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, end, "Comma");
+      this.err.checkObj(
+        "type",
+        ptr.tokens[ptr.line][ptr.index],
+        {
+          name: "SyntaxError",
+          message: "Wrong Function declaration Syntax",
+          ptr,
+        },
+        end,
+        "Comma"
+      );
       ptr.index += Number(ptr.tokens[ptr.line][ptr.index].type.includes("Comma"));
     }
 
@@ -55,11 +85,24 @@ class Statement {
     // Receive params as Assign[] that mean that some of them can be link to
     // default Expression
     let params = this.getParams(ptr, "Close Parentheses", "Variable");
-    let range = { min: params.reduce((acc, curr) => acc + Number(!curr.Expression), 0), max: params.length };
+    let range = {
+      min: params.reduce((acc, curr) => acc + Number(!curr.Expression), 0),
+      max: params.length,
+    };
 
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Indented Block is missing", ptr }, "Start Block");
-    return { type: "FUNC", name: value, params, range, body: [], defined: { value: "", type: "ANY" } };
+
+    return {
+      type: "FUNC",
+      name: value,
+      params,
+      body: [],
+
+      // Define Variable ${value} as type "FUNC" but when you call the function
+      // The result of it is "ANY"
+      defined: { type: "FUNC", range, defined: { value: "", type: "ANY" } } as Func,
+    };
   }
 
   parseIf(ptr: Parser): Condition {
@@ -263,7 +306,7 @@ class Statement {
         // Plus add ability to assign variables/params => (Assign Type)
 
         let i = index < params.length ? index : params.length - 1;
-        let types = params[i].defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "BOOL", "LIST", "ANY"] : [params[i].defined.type];
+        let types = params[i].defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "BOOL", "LIST", "FUNC", "ANY"] : [params[i].defined.type];
 
         let argv = this.exp.parse(ptr);
         let curr = this.transformType(this.exp.type.curr, types);
@@ -332,13 +375,15 @@ class Statement {
   parseFuncCaller(ptr: Parser): FuncCall {
     let { value } = ptr.tokens[ptr.line][ptr.index++ - 1];
 
-    let { type, params, range, defined } =
+    let { type, params, defined } =
       (library[value] as Declaration) ??
-      (getDefinedToken("Declaration", "name", value, ptr.currLevel, () =>
+      (getDefinedToken(["Declaration", "Statement"], "name", value, ptr.currLevel, () =>
         this.err.message({ name: "NameError", message: `Func with this Name "${value}" is not defined`, ptr })
       ) as Declaration);
 
-    let args = this.getArgs(ptr, params, range);
+    this.err.checkObj("type", defined, { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, "FUNC");
+
+    let args = this.getArgs(ptr, params, defined.range);
 
     return {
       type: `${type}_CALL`,

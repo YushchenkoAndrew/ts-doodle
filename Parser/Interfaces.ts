@@ -1,14 +1,13 @@
 import { Assign, Command, Condition, ForLoop, FuncCall, Return } from "./Statement/Interfaces";
-import { Types } from "./Expression/Interfaces";
+import { Func, Types } from "./Expression/Interfaces";
 
 // Basics Interfaces for Parser
 export interface Declaration {
   type: string;
   name: string;
   params: Assign[];
-  range: Range;
   body: Operation[];
-  defined: Types;
+  defined: Func;
 }
 
 export interface Range {
