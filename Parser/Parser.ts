@@ -53,6 +53,7 @@ class Parser {
 
   initStateMachine(level: number = 0, forcedBlock: boolean = false): number {
     let { type } = this.tokens[this.line][this.index] || { type: this.tokens[this.line + 1] ? "NEXT" : "EOF" };
+
     switch (type.split(/\ /)[0]) {
       case "Function": {
         if (process.env.DEBUG) console.log(`FUNCTION: LEVEL ${level}`, this.tokens[this.line][this.index]);
@@ -202,7 +203,7 @@ class Parser {
         if (process.env.DEBUG) console.log(`VARIABLE: LEVEL ${level}`, this.tokens[this.line][this.index]);
         if (!this.checkLevel(level, forcedBlock)) return level;
         this.index++;
-        this.currLevel.body.push({ Statement: this.statement.parseVariable(this) } as Operation);
+        this.currLevel.body.push(this.statement.parseVariable(this) as Operation);
         break;
 
       case "Block":
@@ -217,6 +218,19 @@ class Parser {
 
       case "EOF":
         return level;
+
+      case "Bin":
+      case "Oct":
+      case "Hex":
+      case "Number":
+      case "Float":
+      case "String":
+      case "Boolean":
+        if (process.env.DEBUG) console.log(`EXP: LEVEL ${level}`, this.tokens[this.line][this.index]);
+        if (!this.checkLevel(level, forcedBlock)) return level;
+        this.statement.deleteSpaceInLine(this);
+        this.currLevel.body.push({ Expression: this.statement.exp.parse(this) } as Operation);
+        break;
 
       default:
         this.err.message({ name: "SyntaxError", message: `Such type of operation as "${type}" not exist`, ptr: this });

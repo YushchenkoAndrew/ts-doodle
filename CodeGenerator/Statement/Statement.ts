@@ -26,10 +26,6 @@ class Statement {
       case "RET":
         return `return ${this.exp.parse((tree as Return).Expression ?? ({} as Types))};`;
 
-      case "LIBRARY_CALL":
-      case "FUNC_CALL":
-        return this.parseFuncCall(tree as FuncCall);
-
       case "WHILE":
       case "IF":
         return this.parseIf(ptr, type.toLowerCase(), tree as Condition);

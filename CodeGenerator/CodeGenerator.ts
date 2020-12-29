@@ -53,6 +53,9 @@ class Generator {
       case "Statement":
         return this.statement.parse(this, tree);
 
+      case "Expression":
+        return this.exp.parse(tree as Types) + ";";
+
       default:
         console.log("\nFailed: " + name);
     }
@@ -60,14 +63,8 @@ class Generator {
     return "";
   }
 
-  private parseFuncDeclaration({ style, name, params, body, defined }: Declaration) {
-    let args = params.map((arg) => `${arg.name}: ${this.getType(arg.defined)}${arg.Expression ? ` = ${this.statement.exp.parse(arg.Expression)}` : ""}`);
-
-    if (style == "ARROW") {
-      let { Expression: exp = {} as Types } = body[0].Statement as Return;
-      return `let ${name} = (${args.join(", ")}): ${this.getType(defined)} => ` + this.statement.exp.parse(exp);
-    }
-
+  private parseFuncDeclaration({ name, params, body, defined }: Declaration) {
+    let args = params.map((arg) => `${arg.name}: ${this.getType(arg.defined)}${arg.Expression ? ` = ${this.exp.parse(arg.Expression)}` : ""}`);
     return `function ${name}(${args.join(", ")}): ${this.getType(defined)} {\n` + this.parseBody(body) + `\n${this.getTabLevel()}}\n`;
   }
 

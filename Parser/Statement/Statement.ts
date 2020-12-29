@@ -17,6 +17,10 @@ class Statement {
     this.exp = new Expression(this.err);
   }
 
+  deleteSpaceInLine(ptr: Parser) {
+    ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
+  }
+
   getParams(ptr: Parser, ...allowed: string[]): Assign[] {
     let params: Assign[] = [];
     let assignParams = false;
@@ -42,8 +46,7 @@ class Statement {
   }
 
   parseFunc(ptr: Parser): Declaration {
-    // Delete all spaces
-    ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
+    this.deleteSpaceInLine(ptr);
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong Function Declaration", ptr }, "Variable");
     let { value } = ptr.tokens[ptr.line][ptr.index++];
 
@@ -56,12 +59,11 @@ class Statement {
 
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Close Parentheses are missing", ptr }, "Close Parentheses");
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Indented Block is missing", ptr }, "Start Block");
-    return { style: "FUNC", type: "FUNC", name: value, params: params, range, body: [], defined: { value: "", type: "ANY" } };
+    return { type: "FUNC", name: value, params: params, range, body: [], defined: { value: "", type: "ANY" } };
   }
 
   parseIf(ptr: Parser): Condition {
-    // Delete all spaces
-    ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
+    this.deleteSpaceInLine(ptr);
     this.err.checkObj(
       "type",
       ptr.tokens[ptr.line][ptr.index],
@@ -85,8 +87,7 @@ class Statement {
     // In a switch I just get an array of elements without the last one
     switch (type.split(/\ /).slice(0, -1).join("-")) {
       case "ELSE": {
-        // Delete all spaces
-        ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index++).filter((token) => token.type != "Space"));
+        this.deleteSpaceInLine(ptr);
         this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong ELSE Statement declaration", ptr }, "Start Block");
 
         // Save if body for using it as a header after that
@@ -132,8 +133,7 @@ class Statement {
   }
 
   parseWhile(ptr: Parser): Condition {
-    // Delete all spaces
-    ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
+    this.deleteSpaceInLine(ptr);
     this.err.checkObj(
       "type",
       ptr.tokens[ptr.line][ptr.index],
@@ -151,8 +151,7 @@ class Statement {
   }
 
   parseFor(ptr: Parser): ForLoop {
-    // Delete all spaces
-    ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
+    this.deleteSpaceInLine(ptr);
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index], { name: "SyntaxError", message: "Wrong For loop declaration", ptr }, "Variable");
 
     let { value } = ptr.tokens[ptr.line][ptr.index++];
@@ -175,8 +174,7 @@ class Statement {
   }
 
   parseReturn(ptr: Parser): Return {
-    // Delete all spaces
-    ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
+    this.deleteSpaceInLine(ptr);
 
     // Check the pass keyword, let's check if user put some variable after, if so throw an Error
     if (ptr.tokens[ptr.line][ptr.index - 1].type.includes("Pass") && ptr.tokens[ptr.line][ptr.index])
@@ -188,19 +186,23 @@ class Statement {
     return { type: "RET", Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
   }
 
-  parseVariable(ptr: Parser): Assign | FuncCall {
-    // Delete all spaces
-    ptr.tokens[ptr.line].push(...ptr.tokens[ptr.line].splice(ptr.index).filter((token) => token.type != "Space"));
-    this.err.checkObj(
-      "type",
-      ptr.tokens[ptr.line][ptr.index],
-      { name: "SyntaxError", message: "Wrong Variable Syntax", ptr },
-      "Assignment",
-      "Open Parentheses"
-    );
+  parseVariable(ptr: Parser): Operation {
+    this.deleteSpaceInLine(ptr);
+    // this.err.checkObj(
+    //   "type",
+    //   ptr.tokens[ptr.line][ptr.index],
+    //   { name: "SyntaxError", message: "Wrong Variable Syntax", ptr },
+    //   "Assignment",
+    //   "Open Parentheses"
+    // );
 
-    if (ptr.tokens[ptr.line][ptr.index].type.includes("Assignment")) return this.parseVariableAssign(ptr);
-    return this.parseFuncCaller(ptr);
+    // Check if the next token is Assign Symbol, if so then
+    // define current Operation as Statement
+    if (ptr.tokens[ptr.line][ptr.index].type.includes("Assignment")) return { Statement: this.parseVariableAssign(ptr) as Assign };
+
+    // Else define current Operation as Expression
+    ptr.index--;
+    return { Expression: this.exp.parse(ptr) };
   }
 
   private parseVariableAssign(ptr: Parser): Assign {

@@ -135,7 +135,7 @@ class Expression {
           "type",
           this.type.curr,
           { name: "TypeError", message: "Such Binary Operation is not allowed", ptr },
-          ...allowedOperations[operator][this.type.prev.type]
+          ...(allowedOperations[operator]?.[this.type.prev.type] ?? [])
         );
 
         // Initialize a basic AST if the AST is not define
