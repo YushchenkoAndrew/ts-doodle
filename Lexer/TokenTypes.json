@@ -1,5 +1,6 @@
 {
   "def": "Function Keyword",
+  "lambda": "Exp Function Keyword",
   "return": "Return Keyword",
   "pass": "Pass Keyword",
   "if": "IF Keyword",
