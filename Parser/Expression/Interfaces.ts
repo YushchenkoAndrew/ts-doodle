@@ -1,4 +1,5 @@
 import { FuncCall } from "../Statement/Interfaces";
+import { Range } from "../Interfaces";
 // All types represent a type with value and a defined
 // at the same time
 export interface Str {
@@ -31,6 +32,12 @@ export interface Var {
   defined: Types;
 }
 
+export interface Func {
+  type: string;
+  range: Range;
+  defined: Types;
+}
+
 export interface BinaryOperation {
   type: string;
   value: string;
@@ -46,5 +53,5 @@ export interface UnaryOperation {
   priority: number;
 }
 
-export type Types = Int | Str | Float | Var | List | FuncCall;
+export type Types = Int | Str | Float | Var | List | FuncCall | Func;
 export type AST = BinaryOperation | UnaryOperation;
