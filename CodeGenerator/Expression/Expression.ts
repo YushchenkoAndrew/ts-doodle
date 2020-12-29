@@ -2,7 +2,7 @@ import { Int, Types, Str, Var, Float, BinaryOperation, List, UnaryOperation } fr
 import { isInclude } from "../../lib/index";
 import { FuncCall } from "../../Parser/Statement/Interfaces";
 import commands from "./Commands";
-import library from "../LibraryFunc";
+import library from "./LibraryFunc";
 
 class Expression {
   parse(tree: Types): string {
@@ -18,6 +18,7 @@ class Expression {
 
       case "LIBRARY_CALL":
       case "FUNC_CALL":
+      case "VAR_CALL":
         return this.parseFuncCall(tree as FuncCall);
 
       case "LIST":

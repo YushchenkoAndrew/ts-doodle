@@ -9,7 +9,7 @@ dotenv.config();
 
 class Generator {
   keys = ["Declaration", "Statement", "Expression"];
-  types = { INT: "number", FLOAT: "number", STR: "string", ANY: "any" };
+  types = { INT: "number", FLOAT: "number", STR: "string", FUNC: "Function", ANY: "any" };
 
   syntaxTree: SyntaxTree;
   codeText: string = "";
@@ -63,13 +63,13 @@ class Generator {
     return "";
   }
 
-  private parseFuncDeclaration({ name, params, body, defined }: Declaration) {
+  private parseFuncDeclaration({ name, params, body, defined: { defined } }: Declaration) {
     let args = params.map((arg) => `${arg.name}: ${this.getType(arg.defined)}${arg.Expression ? ` = ${this.exp.parse(arg.Expression)}` : ""}`);
     return `function ${name}(${args.join(", ")}): ${this.getType(defined)} {\n` + this.parseBody(body) + `\n${this.getTabLevel()}}\n`;
   }
 
   getType(defined: Types): string {
-    if ((defined as List).defined) return `${this.getType((defined as List).defined)}[]`;
+    if (defined.type == "LIST") return `${this.getType((defined as List).defined)}[]`;
     return `${this.types[defined.type]}`;
   }
 
