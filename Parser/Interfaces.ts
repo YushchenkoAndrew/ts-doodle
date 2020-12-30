@@ -7,7 +7,7 @@ export interface Declaration {
   name: string;
   params: Assign[];
   body: Operation[];
-  defined: Func;
+  defined: Func[];
 }
 
 export interface Range {

@@ -1,26 +1,26 @@
 import { Types, AST, Var } from "../Expression/Interfaces";
-import { Operation } from "../Interfaces";
+import { Operation, Declaration } from "../Interfaces";
 
 export interface Assign {
   type: string;
   name: string;
   init: boolean;
   binOpr: string;
-  Expression?: Types | AST;
-  defined: Types;
+  Expression?: Types | AST | Declaration;
+  defined: Types[];
 }
 
 export interface Return {
   type: string;
-  Expression?: Types | AST;
-  defined: Types;
+  Expression?: Types | AST | Declaration;
+  defined: Types[];
 }
 
 export interface FuncCall {
   type: string;
   name: string;
   params: (Assign | Types)[];
-  defined: Types;
+  defined: Types[];
 }
 
 export interface Condition {

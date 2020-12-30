@@ -23,19 +23,19 @@ export interface List {
   value: Types[];
   type: string;
   length: number;
-  defined: Types;
+  defined: Types[];
 }
 
 export interface Var {
   value: string;
   type: string;
-  defined: Types;
+  defined: Types[];
 }
 
 export interface Func {
   type: string;
   range: Range;
-  defined: Types;
+  defined: Types[];
 }
 
 export interface BinaryOperation {
