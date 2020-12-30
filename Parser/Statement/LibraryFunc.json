@@ -6,11 +6,11 @@
       {
         "type": "VAR",
         "name": "i",
-        "defined": { "value": "", "type": "INT", "kind": 10 }
+        "defined": [{ "value": "", "type": "INT", "kind": 10 }]
       }
     ],
     "body": [],
-    "defined": { "type": "FUNC", "range": { "min": "1", "max": "1" }, "defined": { "value": "", "type": "STR", "length": -1 } }
+    "defined": [{ "type": "FUNC", "range": { "min": "1", "max": "1" }, "defined": [{ "value": "", "type": "STR", "length": -1 }] }]
   },
 
   "float": {
@@ -20,11 +20,11 @@
       {
         "type": "VAR",
         "name": "x",
-        "defined": { "value": "", "type": "ANY" }
+        "defined": [{ "value": "", "type": "ANY" }]
       }
     ],
     "body": [],
-    "defined": { "type": "FUNC", "range": { "min": "1", "max": "1" }, "defined": { "value": "", "type": "FLOAT" } }
+    "defined": [{ "type": "FUNC", "range": { "min": "1", "max": "1" }, "defined": [{ "value": "", "type": "FLOAT" }] }]
   },
 
   "int": {
@@ -34,17 +34,17 @@
       {
         "type": "VAR",
         "name": "x",
-        "defined": { "value": "", "type": "STR", "length": -1 }
+        "defined": [{ "value": "", "type": "STR", "length": -1 }]
       },
       {
         "type": "VAR",
         "name": "base",
         "Expression": { "value": "10", "type": "INT", "kind": 10 },
-        "defined": { "value": "", "type": "ANY" }
+        "defined": [{ "value": "", "type": "ANY" }]
       }
     ],
     "body": [],
-    "defined": { "type": "FUNC", "range": { "min": "1", "max": "2" }, "defined": { "value": "", "type": "INT", "kind": 10 } }
+    "defined": [{ "type": "FUNC", "range": { "min": "1", "max": "2" }, "defined": [{ "value": "", "type": "INT", "kind": 10 }] }]
   },
 
   "len": {
@@ -54,11 +54,11 @@
       {
         "type": "VAR",
         "name": "s",
-        "defined": { "value": "", "type": "LIST", "length": -1, "defined": { "value": "", "type": "ANY" } }
+        "defined": [{ "value": "", "type": "LIST", "length": -1, "defined": [{ "value": "", "type": "ANY" }] }]
       }
     ],
     "body": [],
-    "defined": { "type": "FUNC", "range": { "min": "1", "max": "1" }, "defined": { "value": "", "type": "INT", "kind": 10 } }
+    "defined": [{ "type": "FUNC", "range": { "min": "1", "max": "1" }, "defined": [{ "value": "", "type": "INT", "kind": 10 }] }]
   },
 
   "print": {
@@ -68,11 +68,11 @@
       {
         "type": "VAR",
         "name": "objects",
-        "defined": { "value": "", "type": "ANY" }
+        "defined": [{ "value": "", "type": "ANY" }]
       }
     ],
     "body": [],
-    "defined": { "type": "FUNC", "range": { "min": "0", "max": "Infinity" }, "defined": { "value": "", "type": "NULL" } }
+    "defined": [{ "type": "FUNC", "range": { "min": "0", "max": "Infinity" }, "defined": [{ "value": "", "type": "NULL" }] }]
   },
 
   "range": {
@@ -82,22 +82,22 @@
       {
         "type": "VAR",
         "name": "start",
-        "defined": { "value": "", "type": "INT", "kind": 10 }
+        "defined": [{ "value": "", "type": "INT", "kind": 10 }]
       },
       {
         "type": "VAR",
         "name": "stop",
-        "defined": { "value": "", "type": "INT", "kind": 10 }
+        "defined": [{ "value": "", "type": "INT", "kind": 10 }]
       },
       {
         "type": "VAR",
         "name": "step",
         "Expression": { "value": "1", "type": "INT", "kind": 10 },
-        "defined": { "value": "", "type": "INT", "kind": 10 }
+        "defined": [{ "value": "", "type": "INT", "kind": 10 }]
       }
     ],
     "body": [],
-    "defined": { "type": "FUNC", "range": { "min": "1", "max": "3" }, "defined": { "value": "", "type": "INT", "kind": 10 } }
+    "defined": [{ "type": "FUNC", "range": { "min": "1", "max": "3" }, "defined": [{ "value": "", "type": "INT", "kind": 10 }] }]
   },
 
   "str": {
@@ -107,16 +107,16 @@
       {
         "type": "VAR",
         "name": "object",
-        "defined": { "value": "", "type": "ANY" }
+        "defined": [{ "value": "", "type": "ANY" }]
       },
       {
         "type": "VAR",
         "name": "encoding",
         "Expression": { "value": "utf-8", "type": "STR", "length": 5 },
-        "defined": { "value": "", "type": "ANY" }
+        "defined": [{ "value": "", "type": "ANY" }]
       }
     ],
     "body": [],
-    "defined": { "type": "FUNC", "range": { "min": "1", "max": "2" }, "defined": { "value": "", "type": "STR", "length": -1 } }
+    "defined": [{ "type": "FUNC", "range": { "min": "1", "max": "2" }, "defined": [{ "value": "", "type": "STR", "length": -1 }] }]
   }
 }

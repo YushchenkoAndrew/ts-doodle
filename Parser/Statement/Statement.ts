@@ -4,7 +4,7 @@ import Expression from "../Expression/Expression";
 import { Declaration, Operation, Range } from "../Interfaces";
 import { Assign, Condition, ForLoop, FuncCall, Return } from "./Interfaces";
 import { copyTree, getDefinedToken, isInclude } from "../../lib/";
-import { AST, Float, Func, Int, List, Types } from "../Expression/Interfaces";
+import { AST, Float, Func, Int, List, Types, Var } from "../Expression/Interfaces";
 import library from "./LibraryFunc.json";
 import { isEqual } from "../../lib/index";
 
@@ -51,7 +51,7 @@ class Statement {
           name: value,
           init: false,
           binOpr: "",
-          defined: { value: "", type: "ANY" },
+          defined: [{ value: "", type: "ANY" }],
         } as Assign);
       } else {
         assignParams = true;
@@ -101,7 +101,7 @@ class Statement {
 
       // Define Variable ${value} as type "FUNC" but when you call the function
       // The result of it is "ANY"
-      defined: { type: "FUNC", range, defined: { value: "", type: "ANY" } } as Func,
+      defined: [{ type: "FUNC", range, defined: [{ value: "", type: "ANY" }] } as Func],
     };
   }
 
@@ -119,7 +119,7 @@ class Statement {
     );
     let exp = this.exp.parse(ptr);
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong If Statement declaration", ptr }, "Start Block");
-    return { type: "IF", Expression: exp, body: [] as Operation[] };
+    return { type: "IF", Expression: exp as AST | Types, body: [] as Operation[] };
   }
 
   // Continue of method Parse If but here we can handle the else and else-if statement
@@ -190,7 +190,7 @@ class Statement {
 
     let exp = this.exp.parse(ptr);
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong While loop initialization", ptr }, "Start Block");
-    return { type: "WHILE", Expression: exp, body: [] as Operation[] };
+    return { type: "WHILE", Expression: exp as AST | Types, body: [] as Operation[] };
   }
 
   parseFor(ptr: Parser): ForLoop {
@@ -208,11 +208,12 @@ class Statement {
     ) as Assign;
 
     // Check on LIST type
-    this.err.checkObj("type", range.defined, { name: "TypeError", message: `${range.defined?.type ?? "Undeclared"} Object is Not Iterable`, ptr }, "LIST");
+    this.err.checkObj("type", range.defined, { name: "TypeError", message: `${range.defined[0]?.type ?? "Undeclared"} Object is Not Iterable`, ptr }, "LIST");
     this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong For loop declaration", ptr }, "Start Block");
 
     // Create a {{value}} as a temporary variable that contain nothing
-    ptr.currLevel.header.push({ Statement: { type: "VAR", name: value, defined: (range.defined as List)?.defined } });
+    let { defined } = range.defined[0] as Var;
+    ptr.currLevel.header.push({ Statement: { type: "VAR", name: value, defined: [...defined] } });
     return { type: "FOR", iter: value, range: { value: range.name, type: "VAR", defined: range.defined }, body: [] as Operation[] };
   }
 
@@ -225,8 +226,8 @@ class Statement {
 
     // Check if the function return any of the type, if not then put as a return value '0'
     let { type } = ptr.tokens[ptr.line][ptr.index] || { type: "" };
-    if (!isInclude(type, "Variable", "Number", "Char", "String", "Unary", "Parentheses")) return { type: "RET", defined: { value: "", type: "NULL" } };
-    return { type: "RET", Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
+    if (!isInclude(type, "Variable", "Number", "Char", "String", "Unary", "Parentheses")) return { type: "RET", defined: [{ value: "", type: "NULL" }] };
+    return { type: "RET", Expression: this.exp.parse(ptr), defined: [this.exp.type.curr] };
   }
 
   parseVariable(ptr: Parser): Operation {
@@ -272,11 +273,11 @@ class Statement {
     // TODO:
     // Check if it's assign with an operation and it's specific to the input language
     // if (isInclude(type, "Add", "Sub", "Mul", "Div", "Mod", "Or", "And", "Xor", "SL", "SR")) console.log("TODO:");
-    return { type: "VAR", name: value, init, binOpr, Expression: this.exp.parse(ptr), defined: this.exp.type.curr };
+    return { type: "VAR", name: value, init, binOpr, Expression: this.exp.parse(ptr), defined: [this.exp.type.curr] };
   }
 
-  private getArgs(ptr: Parser, params: Assign[], range: Range): (Assign | Types)[] {
-    let args: (Assign | Types)[] = [];
+  private getArgs(ptr: Parser, params: Assign[], range: Range): (Assign | Types | Declaration | Declaration)[] {
+    let args: (Assign | Types | AST | Declaration)[] = [];
     let index = -1;
 
     let prevState = {
@@ -306,17 +307,15 @@ class Statement {
         // Plus add ability to assign variables/params => (Assign Type)
 
         let i = index < params.length ? index : params.length - 1;
-        let types = params[i].defined.type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "BOOL", "LIST", "FUNC", "ANY"] : [params[i].defined.type];
+        let types = params[i].defined[0].type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "BOOL", "LIST", "FUNC", "ANY"] : [params[i].defined[0].type];
 
         let argv = this.exp.parse(ptr);
         let curr = this.transformType(this.exp.type.curr, types);
-        // let curr = typeName == "INT" && isInclude("FLOAT", ...type) ? { value: "", type: "FLOAT" } : this.exp.type.curr;
-        // curr = typeName == "FLOAT" && isInclude("INT", ...type) ? ({ value: "", type: "INT", kind: 10 } as Int) : curr;
 
         this.err.checkObj(
           "type",
           curr,
-          { name: "SyntaxError", message: `Wrong arguments declaration, type should be "${params[i].defined.type}" but "${curr.type}" was given`, ptr },
+          { name: "SyntaxError", message: `Wrong arguments declaration, type should be "${params[i].defined[0].type}" but "${curr.type}" was given`, ptr },
           ...types
         );
         // TODO: Somehow update the final body
@@ -375,21 +374,21 @@ class Statement {
   parseFuncCaller(ptr: Parser): FuncCall {
     let { value } = ptr.tokens[ptr.line][ptr.index++ - 1];
 
-    let { type, params, defined } =
-      (library[value] as Declaration) ??
-      (getDefinedToken(["Declaration", "Statement"], "name", value, ptr.currLevel, () =>
+    let { type, params, Expression = {}, defined } =
+      library[value] ??
+      getDefinedToken(["Declaration", "Statement"], "name", value, ptr.currLevel, () =>
         this.err.message({ name: "NameError", message: `Func with this Name "${value}" is not defined`, ptr })
-      ) as Declaration);
+      );
 
-    this.err.checkObj("type", defined, { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, "FUNC");
+    this.err.checkObj("type", defined[0], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, "FUNC");
 
-    let args = this.getArgs(ptr, params, defined.range);
+    let args = this.getArgs(ptr, params ?? (Expression as Declaration).params, defined[0].range);
 
     return {
       type: `${type}_CALL`,
       name: value,
       params: [...args],
-      defined: defined,
+      defined,
     } as FuncCall;
   }
 }

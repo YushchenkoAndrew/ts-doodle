@@ -24,7 +24,7 @@ class Expression {
     this.err = err;
   }
 
-  parse(ptr: Parser): Types | AST {
+  parse(ptr: Parser): Types | AST | Declaration {
     this.ast = {} as AST;
     this.type = { prev: {} as Types, curr: {} as Types };
 
@@ -78,7 +78,7 @@ class Expression {
           );
 
         // Set as default value simple Assign template for Variable
-        let varType: Var | FuncCall = { value, type: "VAR", defined: (varDeclaration as Assign).defined };
+        let varType: Var | FuncCall = { value, type: "VAR", defined: (varDeclaration as Assign).defined } as Var;
         let defined = (varDeclaration as Assign).defined;
         let { type: nextToken } = ptr.tokens[ptr.line][ptr.index] ?? { type: "" };
 
@@ -88,21 +88,21 @@ class Expression {
           // Check if Type is correct one
           this.err.checkObj(
             "type",
-            (varDeclaration as Var).defined,
-            { name: "TypeError", message: `Type ${defined.type} is not callable`, ptr },
+            (varDeclaration as Var).defined[0],
+            { name: "TypeError", message: `Type ${defined[0].type} is not callable`, ptr },
             "FUNC",
             "LIBRARY"
           );
 
           // Then change varType to "FuncCall" and change defined Value
           varType = ptr.statement.parseFuncCaller(ptr);
-          defined = (varType.defined as Var).defined;
+          defined = (varType.defined[0] as Var).defined;
         }
 
         // Check if current variable has any type if so then send itself, else
         // the AST, this need for such situation => (a + b), where a => "ANY",
         // b => "INT"
-        this.type = defineType(this.type, { ...defined }, varType.defined.type == "ANY" ? varType : this.ast);
+        this.type = defineType(this.type, { ...defined[0] }, varType.defined[0].type == "ANY" ? varType : this.ast);
 
         if (priority === null) return this.parseExpression(ptr, { params: varType });
         return varType;
@@ -129,7 +129,7 @@ class Expression {
         );
 
         if (!priority) return this.parseExpression(ptr, { params: { type: "Unary Operation", value: operator, exp: exp, priority: currPriority } as AST });
-        return { type: "Unary Operation", value: operator, exp: exp, priority: currPriority };
+        return { type: "Unary Operation", value: operator, exp: exp, priority: currPriority } as UnaryOperation;
       }
 
       case "Operator": {
@@ -171,7 +171,7 @@ class Expression {
               priority: currPriority,
             } as AST;
             this.ast = copyTree(params) as AST;
-          } else (this.ast as BinaryOperation).right = right;
+          } else (this.ast as BinaryOperation).right = right as Types | AST;
 
           return this.parseExpression(ptr, { priority: currPriority });
         }
@@ -190,7 +190,7 @@ class Expression {
             branch[key] = { type: "Binary Operation", value: operator, left: branch[key], right: right, priority: currPriority };
           else {
             branch = branch || this.ast;
-            updateBranch(branch, { type: "Binary Operation", value: operator, left: branch, right: right, priority: currPriority });
+            updateBranch(branch, { type: "Binary Operation", value: operator, left: branch, right: right, priority: currPriority } as BinaryOperation);
           }
         }
         // 1 + 2 * 3
@@ -222,7 +222,7 @@ class Expression {
           // Check if this.ast is undefined this mean one of this situation:
           // (1 + 2) * 3   --   In this case I send received right value
           // as a "constant" (send it as a left params)
-          if (priority === null) return this.parseExpression(ptr, { params: right });
+          if (priority === null) return this.parseExpression(ptr, { params: right as Types | AST });
         } else this.parentheses--;
 
         return right || (priority !== null ? this.ast : params);
@@ -268,10 +268,10 @@ class Expression {
         this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong List Declaration", ptr }, "Close");
 
         // Restore previous state
-        this.type.curr = { type: "LIST", length: items.length, defined: { ...prevState.type } } as List;
+        this.type.curr = { type: "LIST", length: items.length, defined: [{ ...prevState.type }] } as List;
         this.ast = prevState.AST;
 
-        return { type: "LIST", value: items, length: items.length, defined: { ...this.type.curr } } as List;
+        return { type: "LIST", value: items, length: items.length, defined: [{ ...this.type.curr }] } as List;
       }
 
       // TODO: Add type "FUNC"
@@ -282,14 +282,25 @@ class Expression {
 
         this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Start Block is missing", ptr }, "Start Block");
 
+        // Instead of coping all array and store it in head, just put
+        // all defined variables into the head temporary, it will reduce
+        // some unchanging moments during defending process
+        let length = ptr.currLevel.header.length;
+        ptr.currLevel.header.push(...args.map((param: Assign) => ({ Statement: param })));
+
         // Create simple Expression Operation for Lambda/Arrow functions
-        return {
+        let exp = {
           type: "FUNC",
           name: "",
           params: args,
           body: [{ Expression: this.parse(ptr) }],
-          defined: { type: "FUNC", range, defined: this.type.curr } as Func,
+          defined: [{ type: "FUNC", range, defined: [this.type.curr as Types] } as Func],
         } as Declaration;
+
+        // Restore previous header state
+        ptr.currLevel.header = ptr.currLevel.header.slice(0, length);
+        this.type.curr = { type: "FUNC", range, defined: [this.type.curr] };
+        return exp;
       }
 
       case "LINE_END":
@@ -340,8 +351,8 @@ class Expression {
       if ("left" in branch) defineAnyType(type, branch.left);
       if ("right" in branch) defineAnyType(type, branch.right);
       if ("exp" in branch) defineAnyType(type, branch.exp);
-      if (branch.type == "VAR" && (branch as Var).defined.type == "ANY") {
-        updateBranch((branch as Var).defined, type);
+      if (branch.type == "VAR" && (branch as Var).defined[0].type == "ANY") {
+        updateBranch((branch as Var).defined[0], type);
         // console.log("Yeee", branch);
       }
     }
