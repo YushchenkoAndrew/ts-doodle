@@ -4,7 +4,7 @@ import { OperationTypes } from "../../Parser/Interfaces";
 import { Assign, Condition, ForLoop, FuncCall, Return } from "../../Parser/Statement/Interfaces";
 import { Types } from "../../Parser/Expression/Interfaces";
 import Generator from "../CodeGenerator";
-import { isInclude } from "../../lib/index";
+import { getType, isInclude } from "../../lib/index";
 dotenv.config();
 
 class Statement {
@@ -20,7 +20,7 @@ class Statement {
 
     switch (type) {
       case "VAR":
-        return this.parseVariable(ptr.getType((tree as Assign).defined), tree as Assign);
+        return this.parseVariable(getType((tree as Assign).defined), tree as Assign);
 
       case "RET":
         return `return ${this.exp.parse((tree as Return).Expression ?? ({} as Types))};`;
