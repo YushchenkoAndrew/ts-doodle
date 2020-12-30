@@ -1,11 +1,13 @@
-import { Int, Types, Str, Var, Float, BinaryOperation, List, UnaryOperation } from "../../Parser/Expression/Interfaces";
-import { isInclude } from "../../lib/index";
+import { Int, Types, Str, Var, Float, BinaryOperation, List, UnaryOperation, AST } from "../../Parser/Expression/Interfaces";
+import { getType, isInclude } from "../../lib/index";
 import { FuncCall } from "../../Parser/Statement/Interfaces";
 import commands from "./Commands";
 import library from "./LibraryFunc";
+import { Declaration } from "../../Parser/Interfaces";
+import Generator from "../CodeGenerator";
 
 class Expression {
-  parse(tree: Types): string {
+  parse(tree: Types | AST | Declaration): string {
     let { type } = tree;
 
     switch (type) {
@@ -20,6 +22,9 @@ class Expression {
       case "FUNC_CALL":
       case "VAR_CALL":
         return this.parseFuncCall(tree as FuncCall);
+
+      case "FUNC":
+        return this.parseArrowFunction(tree as Declaration);
 
       case "LIST":
         return `[${(tree as List).value.map((item) => this.parse(item)).join(", ")}]`;
@@ -75,6 +80,11 @@ class Expression {
 
     // TODO: Allow to set the specific arg to value (allow Assign)
     return library[name](args);
+  }
+
+  private parseArrowFunction({ params, body: [{ Expression: exp }], defined: [{ defined }] }: Declaration) {
+    let args = params.map((arg) => `${arg.name}: ${getType(arg.defined)}${arg.Expression ? ` = ${this.parse(arg.Expression)}` : ""}`);
+    return `(${args.join(", ")}): ${getType(defined)} => ` + this.parse(exp as Types | AST);
   }
 }
 

@@ -1,4 +1,4 @@
-import { AST, Types } from "../Parser/Expression/Interfaces";
+import { AST, List, Types, Var } from "../Parser/Expression/Interfaces";
 import { Operation, OperationTypes } from "../Parser/Interfaces";
 
 export function isInclude(type: string, ...arr: string[]) {
@@ -57,4 +57,11 @@ export function copyTree(branch: AST | Types): AST | Types {
   }
 
   return obj;
+}
+
+const types = { INT: "number", FLOAT: "number", STR: "string", FUNC: "Function", ANY: "any" };
+
+export function getType(defined: Types[]): string {
+  if (defined[0].type == "LIST") return `${getType((defined[0] as Var).defined)}[]`;
+  return defined.map((item) => types[item.type]).join(" | ");
 }
