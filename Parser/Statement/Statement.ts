@@ -384,12 +384,9 @@ class Statement {
   parseFuncCaller(ptr: Parser): FuncCall {
     let { value } = ptr.tokens[ptr.line][ptr.index++ - 1];
 
-    let { type, params, Expression = {}, defined } =
-      library[value] ??
-      getDefinedToken(["Declaration", "Statement"], "name", value, ptr.currLevel, () =>
-        this.err.message({ name: "NameError", message: `Func with this Name "${value}" is not defined`, ptr })
-      );
+    let { type, params, Expression = {}, defined } = getDefinedToken(["Declaration", "Statement"], "name", value, ptr.currLevel) ?? library[value];
 
+    if (!type) this.err.message({ name: "NameError", message: `Func with this Name "${value}" is not defined`, ptr });
     this.err.checkObj("type", defined[0], { name: "SyntaxError", message: "Wrong Function declaration Syntax", ptr }, "FUNC");
 
     let args = this.getArgs(ptr, params ?? (Expression as Declaration).params, defined[0].range);
