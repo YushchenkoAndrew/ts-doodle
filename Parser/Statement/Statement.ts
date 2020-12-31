@@ -305,21 +305,10 @@ class Statement {
         // TODO: To come up with solution about how to iterate "i"
         //  when ya setting each param individually
         // Plus add ability to assign variables/params => (Assign Type)
-
         let i = index < params.length ? index : params.length - 1;
-        let types = params[i].defined[0].type == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "BOOL", "LIST", "FUNC", "ANY"] : [params[i].defined[0].type];
 
         let argv = this.exp.parse(ptr);
-        let curr = this.transformType(this.exp.type.curr, types);
-
-        this.err.checkObj(
-          "type",
-          curr,
-          { name: "SyntaxError", message: `Wrong arguments declaration, type should be "${params[i].defined[0].type}" but "${curr.type}" was given`, ptr },
-          ...types
-        );
-        // TODO: Somehow update the final body
-        // if (param.defined.type == "ANY") param.defined = this.type.curr;
+        this.checkType(ptr, params[i].defined, this.exp.type.curr);
 
         args.push(argv);
 
@@ -343,6 +332,27 @@ class Statement {
     this.exp.parentheses = prevState.parentheses;
 
     return args;
+  }
+
+  private checkType(ptr: Parser, defined: Types[], expected: Types) {
+    if (!defined[0]) this.err.message({ name: "TypeError", message: `Wrong Function Declaration`, ptr });
+
+    let types = defined.map((item) => item.type);
+    types = types[0] == "ANY" ? ["INT", "VAR", "STR", "FLOAT", "BOOL", "LIST", "FUNC", "ANY"] : types;
+
+    let curr = this.transformType(expected, types);
+
+    this.err.checkObj(
+      "type",
+      curr,
+      { name: "SyntaxError", message: `Wrong arguments declaration, type should be "${defined[0].type}" but "${curr.type}" was given`, ptr },
+      ...types
+    );
+
+    // Check in depth for the LIST Type
+    if (curr.type == "LIST") {
+      this.checkType(ptr, (defined.filter((item) => item.type == "LIST")[0] as Var)?.defined ?? [], (expected as Var).defined[0]);
+    }
   }
 
   // TODO: At some point come up with much greater solution
