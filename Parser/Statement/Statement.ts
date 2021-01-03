@@ -49,7 +49,7 @@ class Statement {
         params.push({
           type: "VAR",
           name: value,
-          init: false,
+          init: { type: "VAR", init: false },
           binOpr: "",
           defined: [{ value: "", type: "ANY" }],
         } as Assign);
@@ -273,7 +273,7 @@ class Statement {
     // TODO:
     // Check if it's assign with an operation and it's specific to the input language
     // if (isInclude(type, "Add", "Sub", "Mul", "Div", "Mod", "Or", "And", "Xor", "SL", "SR")) console.log("TODO:");
-    return { type: "VAR", name: value, init, binOpr, Expression: this.exp.parse(ptr), defined: [this.exp.type.curr] };
+    return { type: "VAR", name: value, init: { type: "VAR", init }, binOpr, Expression: this.exp.parse(ptr), defined: [this.exp.type.curr] };
   }
 
   private getArgs(ptr: Parser, params: Assign[], range: Range): (Assign | Types | Declaration | Declaration)[] {

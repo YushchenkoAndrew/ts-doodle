@@ -4,10 +4,15 @@ import { Operation, Declaration } from "../Interfaces";
 export interface Assign {
   type: string;
   name: string;
-  init: boolean;
+  init: Initialize;
   binOpr: string;
   Expression?: Types | AST | Declaration;
   defined: Types[];
+}
+
+export interface Initialize {
+  type: string;
+  init: boolean;
 }
 
 export interface Return {
