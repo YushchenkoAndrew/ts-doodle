@@ -124,13 +124,14 @@ class Statement {
 
   // Continue of method Parse If but here we can handle the else and else-if statement
   parseElse(ptr: Parser, level: number, body: Operation[]) {
-    let { type } = ptr.tokens[ptr.line][ptr.index];
+    let { type } = ptr.tokens[ptr.line][ptr.index] || { type: "EOF" };
 
     // Small parser for Else Statement and else if statement
     // In a switch I just get an array of elements without the last one
     switch (type.split(/\ /).slice(0, -1).join("-")) {
       case "ELSE": {
         this.deleteSpaceInLine(ptr);
+        ptr.index++;
         this.err.checkObj("type", ptr.tokens[ptr.line][ptr.index++], { name: "SyntaxError", message: "Wrong ELSE Statement declaration", ptr }, "Start Block");
 
         // Save if body for using it as a header after that

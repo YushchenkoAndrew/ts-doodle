@@ -218,7 +218,7 @@ class Parser {
         return this.initStateMachine(0, forcedBlock);
 
       case "EOF":
-        return level;
+        return 0;
 
       case "Bin":
       case "Oct":
