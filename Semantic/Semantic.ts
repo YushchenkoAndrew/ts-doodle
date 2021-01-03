@@ -1,8 +1,7 @@
-import { SyntaxTree, Operation, OperationTypes } from "../Parser/Interfaces";
-import { Assign } from "../Parser/Statement/Interfaces";
+import { SyntaxTree, Operation, OperationTypes, Declaration } from "../Parser/Interfaces";
+import { Assign, Return } from "../Parser/Statement/Interfaces";
 import Statement from "./Statement/Statement";
 import { Types } from "../Parser/Expression/Interfaces";
-import { findOperations } from "../lib";
 
 class Semantic {
   syntaxTree: SyntaxTree;
@@ -17,7 +16,6 @@ class Semantic {
 
     this.statement = new Statement();
 
-    // this.postAnalysis(this.syntaxTree);
     if (this.syntaxTree.type == "Program") this.parseBody(this.syntaxTree.body);
   }
 
@@ -30,6 +28,7 @@ class Semantic {
   postAnalysis(state: string, curr: OperationTypes | Types, body: Operation[]) {
     switch (state) {
       case "Declaration":
+        this.parseFuncDeclaration(curr as Declaration, body);
         break;
 
       case "Statement": {
@@ -42,12 +41,32 @@ class Semantic {
     }
   }
 
-  findAssignments({ name }: Assign, body = [] as Operation[]): any {
-    return body.filter((item) => (item.Statement as Assign).name == name && !(item.Statement as Assign).init);
-  }
+  private parseFuncDeclaration(curr: Declaration, body: Operation[]) {
+    // TODO: To think about saving level
+    this.parseBody(curr.body);
 
-  filterByType(type: string, operationName: string, body = [] as Operation[]) {
-    return body.filter((item) => item?.[operationName]?.type == type);
+    // TODO: Define RET value + cut of useless Returns
+    if (curr.body.length > 1 || curr.body[0].Statement?.type != "RET") return;
+
+    // Copy function Declaration and delete it from Object
+    let func = JSON.parse(JSON.stringify(body[0].Declaration)) as Declaration;
+    delete body[0].Declaration;
+
+    // Transform Operation Syntax: Declaration => Statement
+    body[0].Statement = {
+      type: "VAR",
+      name: func.name,
+      init: { type: "VAR", init: true },
+      binOpr: "",
+      Expression: {
+        type: "FUNC",
+        name: "",
+        params: func.params,
+        body: [{ Expression: (func.body[0].Statement as Return).Expression }],
+        defined: func.defined,
+      } as Declaration,
+      defined: func.defined,
+    } as Assign;
   }
 
   getTree() {
