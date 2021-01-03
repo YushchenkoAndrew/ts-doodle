@@ -48,7 +48,7 @@ class Statement {
   }
 
   private parseVariable(type: string, { name, init, binOpr, Expression: exp = {} as Types, defined }: Assign) {
-    if (init) return `let ${name}: ${type} ${binOpr}= ${this.exp.parse(exp)};`;
+    if (init.init) return `${init.type == "CONST" ? "const" : "let"} ${name}: ${type} ${binOpr}= ${this.exp.parse(exp)};`;
     return `${name} ${binOpr}= ${this.exp.parse(exp)};`;
   }
 
