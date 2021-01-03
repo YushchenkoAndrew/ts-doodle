@@ -12,9 +12,9 @@ function main() {
   let parser = new Parser(lexing.getTokens());
   parser.start();
 
-  // let semantic = new Semantic(parser.getTree());
+  let semantic = new Semantic(parser.getTree());
 
-  let generator = new Generator(parser.getTree());
+  let generator = new Generator(semantic.getTree());
   generator.save(process.env.FILE_OUT);
 }
 

@@ -65,3 +65,8 @@ export function getType(defined: Types[]): string {
   if (defined[0].type == "LIST") return `${getType((defined[0] as Var).defined)}[]`;
   return defined.map((item) => types[item.type]).join(" | ");
 }
+
+export function findOperations(type: string, key: string, value: string, body: Operation[]): OperationTypes[] {
+  // Check if variable is defined in the body or in the header (in the prev level)
+  return body.filter((obj) => obj[type]?.[key] == value).map((item) => item[type]);
+}
