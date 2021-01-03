@@ -1,10 +1,9 @@
 import { Int, Types, Str, Var, Float, BinaryOperation, List, UnaryOperation, AST } from "../../Parser/Expression/Interfaces";
 import { getType, isInclude } from "../../lib/index";
-import { FuncCall } from "../../Parser/Statement/Interfaces";
+import { Condition, FuncCall } from "../../Parser/Statement/Interfaces";
 import commands from "./Commands";
 import library from "./LibraryFunc";
 import { Declaration } from "../../Parser/Interfaces";
-import Generator from "../CodeGenerator";
 
 class Expression {
   parse(tree: Types | AST | Declaration): string {
@@ -17,6 +16,9 @@ class Expression {
 
       case "Unary Operation":
         return this.parserUnaryOperation(tree as UnaryOperation);
+
+      case "IF":
+        return this.parseTernaryOperator(tree as Condition);
 
       case "LIBRARY_CALL":
       case "FUNC_CALL":
@@ -80,6 +82,12 @@ class Expression {
 
     // TODO: Allow to set the specific arg to value (allow Assign)
     return library[name](args);
+  }
+
+  private parseTernaryOperator({ body, Expression: exp, else: elseBody }: Condition) {
+    // Put this only for safety purposes
+    elseBody = elseBody ?? [];
+    return `${this.parse(exp)} ? ${this.parse(body[0].Expression as Types)} : ${this.parse(elseBody[0].Expression as Types)}`;
   }
 
   private parseArrowFunction({ params, body: [{ Expression: exp }], defined: [{ defined }] }: Declaration) {
