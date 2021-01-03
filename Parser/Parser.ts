@@ -67,6 +67,8 @@ class Parser {
         let header = JSON.parse(JSON.stringify(this.currLevel.header));
         let body = JSON.parse(JSON.stringify(this.currLevel.body));
 
+        // FIXME: Fix bug when funcName is already assigned to "INT",...
+
         // TODO: Not the best solution, have some issues
         // Put created upper head variables in header
         this.currLevel.header.push(...header, ...this.currLevel.body, ...body.slice(-1)[0].Declaration.params.map((param: Assign) => ({ Statement: param })));
