@@ -1,10 +1,5 @@
-function test(a: number): any {
-  return a + 1;
-}
-
-const a: number = 5;
-console.log(test(a));
-if (a) {
-  a = 8;
-}
+const fact: Function = (a: number): any => a ? fact(a - 1) * a : 1;
+let a: number | string = 5;
+console.log(fact(a));
+a = "str";
 console.log(a);
