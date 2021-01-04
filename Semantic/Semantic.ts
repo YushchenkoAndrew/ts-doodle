@@ -1,6 +1,7 @@
 import { SyntaxTree, Operation, OperationTypes, Declaration } from "../Parser/Interfaces";
 import { Assign, Return } from "../Parser/Statement/Interfaces";
 import Statement from "./Statement/Statement";
+import Expression from "./Expression/Expression";
 import { Types } from "../Parser/Expression/Interfaces";
 
 class Semantic {
@@ -8,6 +9,7 @@ class Semantic {
   keys = ["Declaration", "Statement", "Expression"];
 
   statement: Statement;
+  exp: Expression;
 
   constructor(syntaxTree: SyntaxTree) {
     console.log("\x1b[34m", "\n~ Start Semantic Analysis:", "\x1b[0m");
@@ -15,6 +17,7 @@ class Semantic {
     this.syntaxTree = JSON.parse(JSON.stringify(syntaxTree));
 
     this.statement = new Statement();
+    this.exp = new Expression();
 
     if (this.syntaxTree.type == "Program") this.parseBody(this.syntaxTree.body);
   }
@@ -32,12 +35,33 @@ class Semantic {
         break;
 
       case "Statement": {
-        this.statement.parse(curr, body);
+        this.statement.parse(this, curr, body);
         break;
       }
 
       case "Expression":
-        break;
+        let useful = this.exp.erase(curr);
+
+        // Check if any changes was given to the top layer
+        if (useful === curr) break;
+
+        // Check if useful does even exist
+        if (!useful) {
+          if (process.env.DEBUG) {
+            console.log("ERASED USELESS CODE:");
+            console.dir(body[0], { depth: 3 });
+          }
+
+          delete body[0].Expression;
+          break;
+        }
+
+        if (process.env.DEBUG) {
+          console.log("SIMPLIFY EXPRESSION TO:");
+          console.dir({ Expression: useful }, { depth: 3 });
+        }
+
+        body[0].Expression = useful;
     }
   }
 
@@ -45,7 +69,6 @@ class Semantic {
     // TODO: To think about saving level
     this.parseBody(curr.body);
 
-    // TODO: Define RET value + cut of useless Returns
     if (curr.body.length > 1 || curr.body[0].Statement?.type != "RET") return;
 
     // Copy function Declaration and delete it from Object
