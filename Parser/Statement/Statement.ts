@@ -268,7 +268,7 @@ class Statement {
     );
 
     // let range = getDefinedToken("Statement", "name", ptr.tokens[ptr.line][ptr.index++].value, ptr.currLevel, () =>
-    let init = !getDefinedToken("Statement", "name", value, ptr.currLevel);
+    let init = !getDefinedToken("Statement", "name", value, { body: ptr.currLevel.body });
     binOpr = binOpr.replace(/=/g, "");
 
     // TODO:
