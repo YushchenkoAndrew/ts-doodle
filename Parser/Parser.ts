@@ -92,7 +92,6 @@ class Parser {
 
       // TODO: Take into account variables that defined into if statement
       // Make them visible some how
-      // FIXME: Bug with such syntax => if a:\n\ta = 0
       case "ELSE-IF":
       case "IF": {
         if (process.env.DEBUG) console.log(`IF:       LEVEL ${level}`, this.tokens[this.line][this.index]);
@@ -131,6 +130,7 @@ class Parser {
         break;
       }
 
+      // FIXME: Fix bug with starting operation with "else" keyword
       case "ELSE":
         if (process.env.DEBUG) console.log(`ELSE:     LEVEL ${level}`, this.tokens[this.line][this.index]);
         this.checkLevel(level, forcedBlock);
