@@ -10,7 +10,6 @@ class Expression {
     let { type } = tree;
 
     switch (type) {
-      // FIXME: Bug with Parentheses; Create a State Machine
       case "Binary Operation":
         return this.parseBinOperation(tree as BinaryOperation);
 
