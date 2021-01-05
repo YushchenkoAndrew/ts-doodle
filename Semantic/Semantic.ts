@@ -65,11 +65,16 @@ class Semantic {
     }
   }
 
+  // TODO: Check and define params type if its doesn't defined in parser
   private parseFuncDeclaration(curr: Declaration, body: Operation[]) {
     // TODO: To think about saving level
     this.parseBody(curr.body);
+    let size = curr.body.filter((opr) => opr.Declaration || opr.Statement || opr.Expression).length;
 
-    if (curr.body.length > 1 || curr.body[0].Statement?.type != "RET") return;
+    // TODO: To create types post Analyses
+    console.log(this.statement.findStatement("type", "RET", curr.body).map((item) => item.Statement));
+
+    if (size > 1 || curr.body[0].Statement?.type != "RET") return;
 
     // Copy function Declaration and delete it from Object
     let func = JSON.parse(JSON.stringify(body[0].Declaration)) as Declaration;
