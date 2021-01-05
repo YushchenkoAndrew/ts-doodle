@@ -90,6 +90,8 @@ class Statement {
           console.log("CHANGED RETURN TO:");
           console.dir(body[0], { depth: 3 });
         }
+
+        this.parse(ptr, body[0].Statement, body);
         break;
       }
     }
@@ -117,7 +119,7 @@ class Statement {
     // Check if demand Statement located in the another layer of the body
     return body
       .reduce(
-        (acc, curr) => ((curr.Statement as Condition)?.body ? [...acc, ...this.findStatement(key, value, (curr.Statement as Condition).body)] : [...acc, curr]),
+        (acc, curr) => (curr.Statement && "body" in curr.Statement ? [...acc, ...this.findStatement(key, value, curr.Statement.body)] : [...acc, curr]),
         [] as Operation[]
       )
       .filter((obj) => obj.Statement?.[key] == value);
