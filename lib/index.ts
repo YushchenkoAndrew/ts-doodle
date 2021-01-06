@@ -62,8 +62,13 @@ export function copyTree(branch: AST | Types): AST | Types {
 const types = { INT: "number", FLOAT: "number", STR: "string", FUNC: "Function", ANY: "any" };
 
 export function getType(defined: Types[]): string {
-  if (defined[0].type == "LIST") return `${getType((defined[0] as Var).defined)}[]`;
-  return defined.map((item) => types[item.type]).join(" | ");
+  let type = defined.map((item) => {
+    if (item.type != "LIST") return types[item.type];
+    let prev = getType((item as Var).defined);
+    return (prev.includes("|") ? `(${prev})` : prev) + "[]";
+  });
+
+  return type.reduce((acc, curr) => [...acc, ...(!acc.includes(curr) ? [curr] : [])], []).join(" | ");
 }
 
 export function findOperations(type: string, key: string, value: string, body: Operation[]): OperationTypes[] {
