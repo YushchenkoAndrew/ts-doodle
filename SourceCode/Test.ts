@@ -1,8 +1,4 @@
-function fact(a: any): any {
-  a += 5;
-  return a ? "str" : fact(a + 1) + 1;
-}
-
+const fact: Function = (a: number): string => a ? "5" : fact(a + 1) + 1;
 const a: number = (5 + 5) * 3;
 console.log(fact(a));
 fact(5) || fact(0);

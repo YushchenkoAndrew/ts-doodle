@@ -1,9 +1,14 @@
 def fact(a):
-    a += 5
+    # a += 5
     if a:
-        # a += 5
-        return "str"
+        # b = a + 5
+        # return fact(2 + a + 1) + 1
+        return "5"
+        # return 1
     else:
+        # if a:
+            # return fact(a + 1) + 1
+        # b = 1
         return fact(a + 1) + 1
     return 0
 
