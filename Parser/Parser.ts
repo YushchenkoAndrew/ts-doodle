@@ -71,14 +71,21 @@ class Parser {
 
         // TODO: Not the best solution, have some issues
         // Put created upper head variables in header
-        this.currLevel.header.push(...header, ...this.currLevel.body);
-        this.currLevel.body = body.slice(-1)[0].Declaration.params.map((param: Assign) => ({ Statement: param }));
+
+        // FIXME: This solution doesn't define params type during parsing
+        // this.currLevel.header.push(...header, ...this.currLevel.body);
+        // this.currLevel.body = body.slice(-1)[0].Declaration.params.map((param: Assign) => ({ Statement: param }));
+
+        // FIXME: Bug with assigning to params
+        this.currLevel.header.push(...header, ...this.currLevel.body, ...body.slice(-1)[0].Declaration.params.map((param: Assign) => ({ Statement: param })));
+        this.currLevel.body = [];
 
         // Get a next level, because of the recursion I could not save
         // the moment where "jump" is happening so I just return the level
         // (this "jump")
         level = this.initStateMachine(level + 1, true);
-        body.slice(-1)[0].Declaration.body = this.currLevel.body.slice(body.slice(-1)[0].Declaration.params.length);
+        // body.slice(-1)[0].Declaration.body = this.currLevel.body.slice(body.slice(-1)[0].Declaration.params.length);
+        body.slice(-1)[0].Declaration.body = this.currLevel.body;
 
         // Set the type of return value
         // let define = getDefinedToken("Statement", "type", "RET", this.currLevel);
