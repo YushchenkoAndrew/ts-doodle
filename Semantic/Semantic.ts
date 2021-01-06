@@ -3,6 +3,7 @@ import { Assign, Return } from "../Parser/Statement/Interfaces";
 import Statement from "./Statement/Statement";
 import Expression from "./Expression/Expression";
 import { Types } from "../Parser/Expression/Interfaces";
+import { access } from "fs";
 
 class Semantic {
   syntaxTree: SyntaxTree;
@@ -69,10 +70,25 @@ class Semantic {
   private parseFuncDeclaration(curr: Declaration, body: Operation[]) {
     // TODO: To think about saving level
     this.parseBody(curr.body);
+
     let size = curr.body.filter((opr) => opr.Declaration || opr.Statement || opr.Expression).length;
 
-    // TODO: To create types post Analyses
-    console.log(this.statement.findStatement("type", "RET", curr.body).map((item) => item.Statement));
+    // Get all Returns in the func and find the unique one
+    let returns = this.statement.findStatement("type", "RET", curr.body).map((item) => item.Statement) as Return[];
+    let uniqueTypes = Object.values(returns.reduce((acc, curr) => ({ ...acc, ...(acc[curr.type] ? {} : { [curr.defined[0].type]: curr }) }), {}) as Return[]);
+
+    // Define Return types
+    (body[0].Declaration as Declaration).defined[0].defined = uniqueTypes.length
+      ? uniqueTypes.map((item) => item.defined[0])
+      : [{ value: "", type: "UNDEFINED" }];
+
+    if (process.env.DEBUG) {
+      let {
+        name,
+        defined: [{ defined }],
+      } = body[0].Declaration as Declaration;
+      console.log(`DEFINE TO FUNC "${name}" RETURN TYPES [${defined.map(({ type }) => type)}]`);
+    }
 
     if (size > 1 || curr.body[0].Statement?.type != "RET") return;
 
@@ -95,6 +111,11 @@ class Semantic {
       } as Declaration,
       defined: func.defined,
     } as Assign;
+
+    if (process.env.DEBUG) {
+      console.log("TRANSFORM FUNC DECLARATION INTO STATEMENT");
+      console.dir(body[0], { depth: 3 });
+    }
   }
 
   getTree() {

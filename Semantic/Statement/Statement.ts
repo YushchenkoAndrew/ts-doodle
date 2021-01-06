@@ -18,7 +18,7 @@ class Statement {
         return this.parseCondition(ptr, curr as Condition, body);
 
       case "RET":
-        return this.parseReturn(curr as Return, body);
+        return this.parseReturn(body);
     }
   }
 
@@ -41,6 +41,17 @@ class Statement {
     // Firstly parse the body
     ptr.parseBody(curr.body);
     ptr.parseBody(curr.else ?? []);
+
+    // Check if both "then" and "else" contain a return Statement, if so then
+    // cut the rest if the unreached body
+    let checkReturn = this.findStatement("type", "RET", [...curr.body, ...(curr.else ?? [])]).map((item) => item.Statement) as Return[];
+
+    // FIXME: Bug with defining body, for example => if a: return 0; else: if a: return 0
+    // This thing shouldn't work!!! Somehow make it to give false result
+    // First idea: Add a variable that will block depth search
+    // Second idea: Found all Conditional Operations and then just calculate
+    //              min-max range of returns (somehow need to know where there located)
+    if (checkReturn.length >= 2) this.parseReturn(body);
 
     // Then find the size of it, which is based on size of known Operations
     let bodySize = curr.body.filter((opr) => opr.Declaration || opr.Statement || opr.Expression).length;
@@ -91,13 +102,13 @@ class Statement {
           console.dir(body[0], { depth: 3 });
         }
 
-        this.parse(ptr, body[0].Statement, body);
+        // this.parse(ptr, body[0].Statement, body);
         break;
       }
     }
   }
 
-  parseReturn(curr: Return, body: Operation[]) {
+  parseReturn(body: Operation[]) {
     // Get unreached code and check if its contain any operation there
     let unreached = body.slice(1);
     if (!unreached.length) return;
@@ -119,7 +130,10 @@ class Statement {
     // Check if demand Statement located in the another layer of the body
     return body
       .reduce(
-        (acc, curr) => (curr.Statement && "body" in curr.Statement ? [...acc, ...this.findStatement(key, value, curr.Statement.body)] : [...acc, curr]),
+        (acc, curr) =>
+          curr.Statement && "body" in curr.Statement
+            ? [...acc, ...this.findStatement(key, value, [...curr.Statement.body, ...((curr.Statement as Condition).else ?? [])])]
+            : [...acc, curr],
         [] as Operation[]
       )
       .filter((obj) => obj.Statement?.[key] == value);
