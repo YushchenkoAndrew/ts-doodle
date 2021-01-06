@@ -1,9 +1,11 @@
 def fact(a):
+    a += 5
     if a:
-        return fact(a - 1) * a
-        print("NOOO")
+        # a += 5
+        return "str"
     else:
-        return 1
+        return fact(a + 1) + 1
+    return 0
 
 
 # a = "string"
@@ -15,9 +17,12 @@ print(fact(a))
     # a = 1
 5 + fact(5) or fact(0)
 
+
 if a != 5:
     print(a)
 else:
     b = 1
 
+
 print(a)
+c = [1, "str", 5.0, [5], [5.0]]

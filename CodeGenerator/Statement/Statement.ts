@@ -56,7 +56,7 @@ class Statement {
     let result = `${type} (${this.exp.parse(exp)}) {\n` + ptr.parseBody(body) + `\n${ptr.getTabLevel()}}`;
     if (!elseBody) return result;
 
-    console.log(`Statement   : ${ptr.getTabLevel()}[ELSE]`);
+    if (process.env.DEBUG) console.log(`Statement   : ${ptr.getTabLevel()}[ELSE]`);
     return result + " else {\n" + ptr.parseBody(elseBody) + `\n${ptr.getTabLevel()}}`;
   }
 }
