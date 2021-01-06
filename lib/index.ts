@@ -59,7 +59,7 @@ export function copyTree(branch: AST | Types): AST | Types {
   return obj;
 }
 
-const types = { INT: "number", FLOAT: "number", STR: "string", FUNC: "Function", ANY: "any" };
+const types = { INT: "number", FLOAT: "number", STR: "string", FUNC: "Function", ANY: "any", NULL: "null", UNDEFINED: "void", UNKNOWN: "unknown" };
 
 export function getType(defined: Types[]): string {
   let type = defined.map((item) => {
