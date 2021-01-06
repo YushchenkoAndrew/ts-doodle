@@ -81,7 +81,7 @@
       }
     ],
     "body": [],
-    "defined": [{ "type": "FUNC", "range": { "min": "0", "max": "Infinity" }, "defined": [{ "value": "", "type": "NULL" }] }]
+    "defined": [{ "type": "FUNC", "range": { "min": "0", "max": "Infinity" }, "defined": [{ "value": "", "type": "UNDEFINED" }] }]
   },
 
   "range": {
