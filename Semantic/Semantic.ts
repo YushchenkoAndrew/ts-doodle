@@ -75,12 +75,15 @@ class Semantic {
 
     // Get all Returns in the func and find the unique one
     let returns = this.statement.findStatement("type", "RET", curr.body).map((item) => item.Statement) as Return[];
-    let uniqueTypes = Object.values(returns.reduce((acc, curr) => ({ ...acc, ...(acc[curr.type] ? {} : { [curr.defined[0].type]: curr }) }), {}) as Return[]);
+    let uniqueTypes = Object.values(
+      returns.reduce(
+        (acc, curr) => ({ ...acc, ...curr.defined.filter((item) => !acc[item.type]).reduce((total, item) => ({ ...total, [item.type]: item }), {}) }),
+        {}
+      )
+    ) as Types[];
 
     // Define Return types
-    (body[0].Declaration as Declaration).defined[0].defined = uniqueTypes.length
-      ? uniqueTypes.map((item) => item.defined[0])
-      : [{ value: "", type: "UNDEFINED" }];
+    (body[0].Declaration as Declaration).defined[0].defined = uniqueTypes.length ? uniqueTypes : [{ value: "", type: "UNDEFINED" }];
 
     if (process.env.DEBUG) {
       let {

@@ -66,8 +66,12 @@ class Statement {
         let ternary = { then: curr.body[0].Statement as Assign, else: curr.else[0].Statement as Assign };
         if (ternary.then.name != ternary.else.name) break;
 
+        let uniqueTypes = Object.values(
+          [...ternary.then.defined, ...ternary.else.defined].reduce((acc, curr) => ({ ...acc, ...(acc[curr.type] ? {} : { [curr.type]: curr }) }), {})
+        );
+
         // Copy to the Statement Assign Operation from then body
-        body[0].Statement = ternary.then;
+        body[0].Statement = { ...ternary.then, defined: uniqueTypes } as Assign;
 
         // Set "then" and "else" body to the appropriate Expression
         (body[0].Statement as Assign).Expression = {
@@ -86,9 +90,12 @@ class Statement {
       case "RET": {
         // Save "then" and "else" body values
         let ternary = { then: curr.body[0].Statement as Return, else: curr.else[0].Statement as Return };
+        let uniqueTypes = Object.values(
+          [...ternary.then.defined, ...ternary.else.defined].reduce((acc, curr) => ({ ...acc, ...(acc[curr.type] ? {} : { [curr.type]: curr }) }), {})
+        );
 
         // Copy to the Statement Assign Operation from then body
-        body[0].Statement = ternary.then;
+        body[0].Statement = { ...ternary.then, defined: uniqueTypes } as Return;
 
         // Set "then" and "else" body to the appropriate Expression
         (body[0].Statement as Assign).Expression = {
